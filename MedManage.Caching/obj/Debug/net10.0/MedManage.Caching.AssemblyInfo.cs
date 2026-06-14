@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("MedManage.Caching")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+1897dc5c69cce2b62b1481e1b552072cac5b52cc")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+b47ee770d96de5eab8980e9aecb520be3d862f8c")]
 [assembly: System.Reflection.AssemblyProductAttribute("MedManage.Caching")]
 [assembly: System.Reflection.AssemblyTitleAttribute("MedManage.Caching")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

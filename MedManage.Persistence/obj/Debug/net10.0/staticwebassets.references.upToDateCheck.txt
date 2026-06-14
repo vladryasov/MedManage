@@ -5,3 +5,6 @@ D:\laba\практика\MedManage.Core\MedManage.Domain\obj\Debug\net10.0\stati
 D:\laba\практика\MedManage.Core\MedManage.Domain\obj\Debug\net10.0\staticwebassets.build.json
 D:\laba\практика\MedManage.Core\MedManage.Domain\obj\Debug\net10.0\staticwebassets.build.json
 D:\laba\практика\MedManage.Core\MedManage.Domain\obj\Debug\net10.0\staticwebassets.build.json
+D:\laba\практика\MedManage.Core\MedManage.Domain\obj\Debug\net10.0\staticwebassets.build.json
+D:\laba\практика\MedManage.Core\MedManage.Domain\obj\Debug\net10.0\staticwebassets.build.json
+D:\laba\практика\MedManage.Core\MedManage.Domain\obj\Debug\net10.0\staticwebassets.build.json

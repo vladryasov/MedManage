@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using MedManage.Indentity.Extensions;
 using UserManagement.Application.Filters.ExceptionHadling;
-using UserManagement.Persistence.Extensions;
+using MedManage.Persistence.Extensions;
 
 public class Program
 {
@@ -37,6 +37,8 @@ public class Program
         //builder.Services.AddInfrastructureRepositoriesServices();
         
         var app = builder.Build();
+
+        app.ApplyDatabaseMigrations();
         
         app.UseSwagger();
         app.UseSwaggerUI(options =>

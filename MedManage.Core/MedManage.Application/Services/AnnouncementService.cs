@@ -80,8 +80,9 @@ namespace MedManage.Application.Services
             var user = await _userRepository.GetByIdAsync(userId);
             if (user == null) throw new InvalidOperationException("Пользователь не найден.");
 
-            Announcement announcement = _mapper.Map<Announcement>(announcementRequest);
-            announcement.UserName = user.UserName; 
+            var announcement = _mapper.Map<Announcement>(announcementRequest);
+            announcement.CreatedByUserId = userId;
+            announcement.OrganizationId = user.OrganizationId;
 
             await _announcementRepository.CreateAsync(announcement);
         }

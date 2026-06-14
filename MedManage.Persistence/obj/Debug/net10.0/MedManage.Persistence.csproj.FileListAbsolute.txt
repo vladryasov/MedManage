@@ -21,7 +21,6 @@ D:\laba\практика\MedManage.Persistence\obj\Debug\net10.0\staticwebassets
 D:\laba\практика\MedManage.Persistence\obj\Debug\net10.0\staticwebassets.development.json
 D:\laba\практика\MedManage.Persistence\obj\Debug\net10.0\staticwebassets.build.endpoints.json
 D:\laba\практика\MedManage.Persistence\obj\Debug\net10.0\swae.build.ex.cache
-D:\laba\практика\MedManage.Persistence\obj\Debug\net10.0\staticwebassets.upToDateCheck.txt
 D:\laba\практика\MedManage.Persistence\obj\Debug\net10.0\MedManag.FA59F0A6.Up2Date
 D:\laba\практика\MedManage.Persistence\obj\Debug\net10.0\MedManage.Persistence.dll
 D:\laba\практика\MedManage.Persistence\obj\Debug\net10.0\refint\MedManage.Persistence.dll
@@ -29,3 +28,4 @@ D:\laba\практика\MedManage.Persistence\obj\Debug\net10.0\MedManage.Persi
 D:\laba\практика\MedManage.Persistence\obj\Debug\net10.0\MedManage.Persistence.genruntimeconfig.cache
 D:\laba\практика\MedManage.Persistence\obj\Debug\net10.0\ref\MedManage.Persistence.dll
 D:\laba\практика\MedManage.Persistence\bin\Debug\net10.0\MedManage.Domain.staticwebassets.endpoints.json
+D:\laba\практика\MedManage.Persistence\obj\Debug\net10.0\staticwebassets.upToDateCheck.txt

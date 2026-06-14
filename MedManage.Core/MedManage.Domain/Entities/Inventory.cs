@@ -1,10 +1,15 @@
 ﻿namespace MedManage.Domain.Entities;
 
 /// <summary>
-/// Сущность инвентаризации.
+/// Сущность складского остатка продукта.
 /// </summary>
 public class Inventory
 {
+    /// <summary>
+    /// Уникальный идентификатор записи инвентаризации.
+    /// </summary>
+    public Guid InventoryId { get; set; }
+
     /// <summary>
     /// Количество товара на складе.
     /// </summary>
@@ -16,12 +21,12 @@ public class Inventory
     public DateTime LastUpdated { get; set; }
 
     /// <summary>
-    /// Уникальный идентификатор продукта (внешний ключ).
+    /// Идентификатор продукта (внешний ключ, уникальный — связь 1:1).
     /// </summary>
     public Guid ProductId { get; set; }
 
     /// <summary>
-    /// Навигационное свойство: продукт, связанный с инвентаризацией.
+    /// Продукт, связанный с инвентаризацией.
     /// </summary>
-    public Product Product { get; set; }
+    public Product Product { get; set; } = null!;
 }

@@ -15,7 +15,7 @@ public class Product
     /// <summary>
     /// Название продукта.
     /// </summary>
-    public string Name { get; set; }
+    public string Name { get; set; } = null!;
 
     /// <summary>
     /// Тип продукта.
@@ -33,7 +33,17 @@ public class Product
     public DateTime ExpirationDate { get; set; }
 
     /// <summary>
-    /// Навигационное свойство: информация об инвентаризации продукта.
+    /// Идентификатор организации-владельца продукта.
     /// </summary>
-    public Inventory Inventory { get; set; }
+    public Guid OrganizationId { get; set; }
+
+    /// <summary>
+    /// Организация, которой принадлежит продукт.
+    /// </summary>
+    public Organization Organization { get; set; } = null!;
+
+    /// <summary>
+    /// Запись об остатках на складе (1:1).
+    /// </summary>
+    public Inventory? Inventory { get; set; }
 }

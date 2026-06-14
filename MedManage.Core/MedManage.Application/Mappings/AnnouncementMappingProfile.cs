@@ -1,24 +1,18 @@
 ﻿using AutoMapper;
 using MedManage.Application.DTOs;
 using MedManage.Domain.Entities;
-using Announcement = MedManage.Domain.Entities.Announcement;
 
-namespace MedManage.Application.Mappings
+namespace MedManage.Application.Mappings;
+
+public class AnnouncementMappingProfile : Profile
 {
-    /// <summary>
-    /// Предоставляет маппинг между сущностью <see cref="Announcement"/> и DTO <see cref="AnnouncementDTO"/>.
-    /// </summary>
-    public class AnnouncementMappingProfile : Profile
+    public AnnouncementMappingProfile()
     {
-        /// <summary>
-        /// Инициализирует новый экземпляр класса <see cref="AnnouncementMappingProfile"/>.
-        /// Настраивает маппинг AutoMapper для сущности Announcement и её DTO.
-        /// </summary>
-        public AnnouncementMappingProfile()
-        {
-            CreateMap<Announcement, AnnouncementDTO>();
+        CreateMap<Announcement, AnnouncementDTO>()
+            .ForMember(d => d.UserName, o => o.MapFrom(s => s.User.UserName));
 
-            CreateMap<AnnouncementDTO, Announcement>();
-        }
+        CreateMap<AnnouncementDTO, Announcement>()
+            .ForMember(d => d.User, o => o.Ignore())
+            .ForMember(d => d.Organization, o => o.Ignore());
     }
 }

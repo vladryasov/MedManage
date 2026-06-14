@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 18
-VisualStudioVersion = 18.6.11822.322 stable
+VisualStudioVersion = 18.6.11822.322
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "MedManage.Core", "MedManage.Core", "{2043A3D8-5356-4BEE-9D3C-2D411A651EA2}"
 EndProject
@@ -14,8 +14,6 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MedManage.Indentity", "MedManage.Indentity\MedManage.Indentity.csproj", "{E61C38E7-D829-4CF8-AE81-29FE8043AA6E}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MedManage.Persistence", "MedManage.Persistence\MedManage.Persistence.csproj", "{09B36E2A-5214-4751-B331-C325C3A42896}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MedManage.Caching", "MedManage.Caching\MedManage.Caching.csproj", "{AAF86655-1488-4AFE-B244-62D4C37DBF7E}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "MedManage.Presentation", "MedManage.Presentation", "{00FE9421-06AA-4122-99BE-6F737DDB7DE4}"
 EndProject
@@ -48,10 +46,6 @@ Global
 		{09B36E2A-5214-4751-B331-C325C3A42896}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{09B36E2A-5214-4751-B331-C325C3A42896}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{09B36E2A-5214-4751-B331-C325C3A42896}.Release|Any CPU.Build.0 = Release|Any CPU
-		{AAF86655-1488-4AFE-B244-62D4C37DBF7E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{AAF86655-1488-4AFE-B244-62D4C37DBF7E}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{AAF86655-1488-4AFE-B244-62D4C37DBF7E}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{AAF86655-1488-4AFE-B244-62D4C37DBF7E}.Release|Any CPU.Build.0 = Release|Any CPU
 		{DF3E3531-21B0-40EA-9FCD-939240541B44}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{DF3E3531-21B0-40EA-9FCD-939240541B44}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{DF3E3531-21B0-40EA-9FCD-939240541B44}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -65,7 +59,9 @@ Global
 		{7118273F-ADB3-476B-9E66-06319A6A8567} = {2043A3D8-5356-4BEE-9D3C-2D411A651EA2}
 		{E61C38E7-D829-4CF8-AE81-29FE8043AA6E} = {896FD78F-58D2-4653-9804-4581E0DA6666}
 		{09B36E2A-5214-4751-B331-C325C3A42896} = {896FD78F-58D2-4653-9804-4581E0DA6666}
-		{AAF86655-1488-4AFE-B244-62D4C37DBF7E} = {896FD78F-58D2-4653-9804-4581E0DA6666}
 		{DF3E3531-21B0-40EA-9FCD-939240541B44} = {00FE9421-06AA-4122-99BE-6F737DDB7DE4}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {19DA6046-C57A-4A19-BC17-456265240775}
 	EndGlobalSection
 EndGlobal

@@ -19,7 +19,6 @@ D:\laba\практика\MedManage.Core\MedManage.Domain\obj\Debug\net10.0\stati
 D:\laba\практика\MedManage.Core\MedManage.Domain\obj\Debug\net10.0\staticwebassets.development.json
 D:\laba\практика\MedManage.Core\MedManage.Domain\obj\Debug\net10.0\staticwebassets.build.endpoints.json
 D:\laba\практика\MedManage.Core\MedManage.Domain\obj\Debug\net10.0\swae.build.ex.cache
-D:\laba\практика\MedManage.Core\MedManage.Domain\obj\Debug\net10.0\staticwebassets.upToDateCheck.txt
 D:\laba\практика\MedManage.Core\MedManage.Domain\obj\Debug\net10.0\MedManage.Domain.dll
 D:\laba\практика\MedManage.Core\MedManage.Domain\obj\Debug\net10.0\refint\MedManage.Domain.dll
 D:\laba\практика\MedManage.Core\MedManage.Domain\obj\Debug\net10.0\MedManage.Domain.pdb
