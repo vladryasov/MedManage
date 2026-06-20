@@ -18,6 +18,7 @@ public static class ServiceCollectionExtensions
     {
         services.AddScoped<IAnnouncementService, AnnouncementService>();
         services.AddScoped<IUserService, UserService>();
+        services.AddScoped<IAuthService, AuthService>();
 
         services.AddAutoMapper(cfg =>
         {

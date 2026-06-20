@@ -16,12 +16,10 @@ public class AnnouncementRepository : IAnnouncementRepository
     private const int RecentAnnouncementsLimit = 20;
 
     private readonly IAppDbContext _context;
-    private readonly IInMemoryCache _cache; // только для массовой инвалидации в GetPaginated
 
-    public AnnouncementRepository(IAppDbContext context, IInMemoryCache cache)
+    public AnnouncementRepository(IAppDbContext context)
     {
         _context = context;
-        _cache = cache;
     }
 
     [Cache("RecentAnnouncements", ExpirationSeconds = 300)] // 5 минут
@@ -34,12 +32,21 @@ public class AnnouncementRepository : IAnnouncementRepository
             .ToListAsync();
     }
 
-    [Cache("ById:{announcementId}", ExpirationSeconds = 1800)] // 30 минут
+    [Transactional]
+    [CacheInvalidate("RecentAnnouncements")]
     public async Task<Announcement> GetByIdAsync(Guid announcementId)
     {
-        return await _context.Announcements
+        var announcement = await _context.Announcements
             .Include(a => a.User)
             .FirstOrDefaultAsync(a => a.AnnouncementId == announcementId);
+
+        if (announcement != null)
+        {
+            announcement.Views++;
+            await _context.SaveChangesAsync();
+        }
+
+        return announcement;
     }
 
     [Transactional]
@@ -85,10 +92,6 @@ public class AnnouncementRepository : IAnnouncementRepository
         }
 
         _context.SaveChanges();
-
-        // массовая инвалидация (дублирует атрибут, но атрибут сработает после метода)
-        _cache.RemoveByPrefix("ById:");
-        _cache.Remove(AnnouncementCacheKeys.RecentAnnouncements);
 
         return announcements
             .Skip((pageNumber - 1) * pageSize)
