@@ -1,5 +1,6 @@
 ﻿using MedManage.Application.DTOs;
 using MedManage.Application.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MedManage.Application.Filters;
 using MedManage.Domain.Enums;
@@ -7,6 +8,7 @@ using MedManage.Domain.Enums;
 namespace MedManage.WebAPI.Controllers
 {
     [ApiController]
+    [Authorize]
     [ValidateModelState]
     [Route("api/[controller]")]
     public class UserController : ControllerBase

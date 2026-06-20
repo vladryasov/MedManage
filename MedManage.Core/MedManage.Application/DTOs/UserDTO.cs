@@ -11,7 +11,7 @@ public class UserDTO
     /// <summary>
     /// Уникальный идентификатор пользователя.
     /// </summary>
-    public Guid Id { get; set; }
+    public Guid UserId { get; set; }
 
     /// <summary>
     /// Имя пользователя.

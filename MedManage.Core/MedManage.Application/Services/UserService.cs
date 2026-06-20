@@ -1,5 +1,4 @@
-﻿using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
+﻿using System.Security.Claims;
 using AutoMapper;
 using Microsoft.AspNetCore.Http;
 using MedManage.Application.DTOs;
@@ -45,7 +44,7 @@ namespace MedManage.Application.Services
             if (updatedUser == null)
                 throw new ArgumentNullException(nameof(updatedUser));
 
-            var existingUser = await _userRepository.GetByIdAsync(updatedUser.Id);
+            var existingUser = await _userRepository.GetByIdAsync(updatedUser.UserId);
             if (existingUser == null)
                 throw new InvalidOperationException("Пользователь не найден.");
 
@@ -71,7 +70,15 @@ namespace MedManage.Application.Services
         public async Task UpdateUserRoleAsync(UserDTO updatedUser, UserRole newRole)
         {
             if (updatedUser == null) throw new ArgumentNullException(nameof(updatedUser));
-            var existingUser = await _userRepository.GetByIdAsync(updatedUser.Id);
+            
+            var currentUserId = GetCurrentUserId();
+            var currentUser = await _userRepository.GetByIdAsync(currentUserId);
+            if (currentUser.Role < UserRole.Admin)
+                throw new UnauthorizedAccessException("Недостаточно прав для изменения роли");
+            if (newRole > currentUser.Role)
+                throw new UnauthorizedAccessException("Нельзя назначить роль выше своей");
+            
+            var existingUser = await _userRepository.GetByIdAsync(updatedUser.UserId);
             existingUser.Role = newRole;
             await _userRepository.UpdateAsync(existingUser);
         }
@@ -79,24 +86,25 @@ namespace MedManage.Application.Services
         public async Task UpdateUserPhoneNumberAsync(UserDTO updatedUser)
         {
             if (updatedUser == null)  throw new ArgumentNullException(nameof(updatedUser));
-            var existingUser = await _userRepository.GetByIdAsync(updatedUser.Id);
-            if (existingUser == null)  throw new InvalidOperationException($"{updatedUser.Id} - такого пользователя нет.");
+            
+            var currentUserId = GetCurrentUserId();
+            if (updatedUser.UserId != currentUserId)
+            {
+                var currentUser = await _userRepository.GetByIdAsync(currentUserId);
+                if (currentUser.Role < UserRole.Admin)
+                    throw new UnauthorizedAccessException("Недостаточно прав для изменения номера");
+            }
+            
+            var existingUser = await _userRepository.GetByIdAsync(updatedUser.UserId);
+            if (existingUser == null)  throw new InvalidOperationException($"{updatedUser.UserId} - такого пользователя нет.");
             existingUser.PhoneNumber = updatedUser.PhoneNumber;
             await _userRepository.UpdateAsync(existingUser);
         }
         
-        
         /// <inheritdoc />
         public string GetUserNameFromToken()
         {
-            var token = _httpContextAccessor.HttpContext?.Request.Headers["Authorization"].ToString()?.Split(" ").Last();
-            if (string.IsNullOrEmpty(token))
-                throw new InvalidOperationException("Токен отсутствует.");
-
-            var jwtHandler = new JwtSecurityTokenHandler();
-            var jwtToken = jwtHandler.ReadJwtToken(token);
-
-            var nameClaim = jwtToken?.Claims.FirstOrDefault(c => c.Type == "name")?.Value;
+            var nameClaim = _httpContextAccessor.HttpContext?.User.FindFirst("name")?.Value;
             if (string.IsNullOrEmpty(nameClaim))
                 throw new InvalidOperationException("Имя пользователя отсутствует в токене.");
 

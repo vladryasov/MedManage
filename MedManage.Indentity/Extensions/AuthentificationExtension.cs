@@ -44,8 +44,11 @@ namespace MedManage.Identity.Extensions
                     // Отключение проверки срока действия токена
                     ValidateLifetime = false, 
 
-                    // Отключение проверки подписи токена
-                    ValidateIssuerSigningKey = false,
+                    // Не требовать наличие поля exp в токене
+                    RequireExpirationTime = false,
+
+                    // Включение проверки подписи токена
+                    ValidateIssuerSigningKey = true,
 
                     // Установка аудитории из конфигурации
                     ValidAudience = configuration["Jwt:Audience"],

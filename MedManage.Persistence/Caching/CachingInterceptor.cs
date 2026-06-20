@@ -84,9 +84,18 @@
         {
             foreach (var template in attr.KeyTemplates)
             {
-                var key = BuildKey(template, invocation);
-                _cache.Remove(key);
-                _logger.LogDebug("Invalidated cache key: {Key}", key);
+                if (template.EndsWith('*'))
+                {
+                    var prefix = BuildKey(template.TrimEnd('*'), invocation);
+                    _cache.RemoveByPrefix(prefix);
+                    _logger.LogDebug("Invalidated cache by prefix: {Prefix}", prefix);
+                }
+                else
+                {
+                    var key = BuildKey(template, invocation);
+                    _cache.Remove(key);
+                    _logger.LogDebug("Invalidated cache key: {Key}", key);
+                }
             }
         }
 
@@ -101,7 +110,7 @@
                 result = result.Replace($"{{{parameters[i].Name}}}", args[i]?.ToString() ?? "null");
             }
             // Можно добавить имя типа и метода, чтобы избежать коллизий
-            return $"{invocation.TargetType?.Name}.{invocation.Method.Name}:{result}";
+            return $"{invocation.TargetType?.Name}:{result}";
         }
 
         private static CacheAttribute? GetCacheAttribute(IInvocation invocation)
