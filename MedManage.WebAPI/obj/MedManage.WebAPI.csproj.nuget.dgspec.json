@@ -53,6 +53,14 @@
           "framework": "net10.0",
           "targetAlias": "net10.0",
           "dependencies": {
+            "BCrypt.Net-Next": {
+              "target": "Package",
+              "version": "[4.2.0, )"
+            },
+            "MailKit": {
+              "target": "Package",
+              "version": "[4.17.0, )"
+            },
             "System.IdentityModel.Tokens.Jwt": {
               "target": "Package",
               "version": "[8.19.1, )"
@@ -1404,6 +1412,10 @@
               "target": "Package",
               "version": "[11.0.0, )"
             },
+            "BCrypt.Net-Next": {
+              "target": "Package",
+              "version": "[4.2.0, )"
+            },
             "Castle.Core": {
               "target": "Package",
               "version": "[5.2.1, )"
@@ -1920,6 +1932,10 @@
             "AutoMapper.Extensions.ExpressionMapping": {
               "target": "Package",
               "version": "[11.0.0, )"
+            },
+            "DotNetEnv": {
+              "target": "Package",
+              "version": "[3.2.0, )"
             },
             "Microsoft.AspNetCore.Authentication.JwtBearer": {
               "target": "Package",

@@ -5,6 +5,7 @@ import {
   UserOutlined,
   LogoutOutlined,
   TeamOutlined,
+  BankOutlined,
   MenuFoldOutlined,
   MenuUnfoldOutlined,
   SunOutlined,
@@ -35,6 +36,11 @@ export default function AppLayout() {
       key: '/users',
       icon: <TeamOutlined />,
       label: 'Пользователи',
+    },
+    {
+      key: '/organizations',
+      icon: <BankOutlined />,
+      label: 'Организации',
     },
   ];
 

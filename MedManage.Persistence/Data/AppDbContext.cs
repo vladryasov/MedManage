@@ -18,6 +18,7 @@ public class AppDbContext : DbContext, IAppDbContext
     public DbSet<Product> Products => Set<Product>();
     public DbSet<Inventory> Inventories => Set<Inventory>();
     public DbSet<Announcement> Announcements => Set<Announcement>();
+    public DbSet<NotificationOutbox> NotificationOutbox => Set<NotificationOutbox>();
 
     public IDbContextTransaction BeginTransaction(IsolationLevel isolationLevel = IsolationLevel.RepeatableRead)
         => Database.BeginTransaction(isolationLevel);

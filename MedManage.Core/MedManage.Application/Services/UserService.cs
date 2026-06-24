@@ -1,6 +1,7 @@
 ﻿using System.Security.Claims;
 using AutoMapper;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Configuration;
 using MedManage.Application.DTOs;
 using MedManage.Application.Interfaces;
 using MedManage.Domain.Entities;
@@ -9,26 +10,78 @@ using MedManage.Domain.Interfaces;
 
 namespace MedManage.Application.Services
 {
-    /// <summary>
-    /// Сервис для управления пользователями.
-    /// </summary>
     public class UserService : IUserService
     {
         private readonly IUserRepository _userRepository;
+        private readonly IPasswordService _passwordService;
+        private readonly IOutboxService _outboxService;
         private readonly IMapper _mapper;
         private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly IConfiguration _configuration;
 
-        /// <summary>
-        /// Конструктор сервиса управления пользователями.
-        /// </summary>
-        public UserService(IUserRepository userRepository, IMapper mapper, IHttpContextAccessor httpContextAccessor)
+        public UserService(
+            IUserRepository userRepository,
+            IPasswordService passwordService,
+            IOutboxService outboxService,
+            IMapper mapper,
+            IHttpContextAccessor httpContextAccessor,
+            IConfiguration configuration)
         {
             _userRepository = userRepository ?? throw new ArgumentNullException(nameof(userRepository));
+            _passwordService = passwordService;
+            _outboxService = outboxService;
             _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
             _httpContextAccessor = httpContextAccessor ?? throw new ArgumentNullException(nameof(httpContextAccessor));
+            _configuration = configuration;
         }
 
-        /// <inheritdoc />
+        public async Task<UserDTO> CreateUserAsync(CreateUserRequest request)
+        {
+            var currentUserId = GetCurrentUserId();
+            var currentUser = await _userRepository.GetByIdAsync(currentUserId);
+            if (currentUser == null || currentUser.Role < UserRole.Admin)
+                throw new UnauthorizedAccessException("Недостаточно прав для создания пользователя");
+
+            var existingEmail = await _userRepository.FindByEmailAsync(request.Email);
+            if (existingEmail != null)
+                throw new InvalidOperationException("Пользователь с таким email уже существует");
+
+            var userName = _passwordService.GenerateUserName();
+            while (await _userRepository.FindByUserNameAsync(userName) != null)
+                userName = _passwordService.GenerateUserName();
+
+            var password = _passwordService.GeneratePassword();
+            var passwordHash = _passwordService.Hash(password);
+
+            var user = await _userRepository.AddAsync(
+                userName,
+                request.FullName,
+                request.Email,
+                UserRole.CommonUser,
+                request.PhoneNumber ?? "",
+                passwordHash,
+                request.OrganizationId);
+
+            var adminEmail = _configuration["AdminSettings:Email"];
+            if (!string.IsNullOrWhiteSpace(adminEmail))
+            {
+                await _outboxService.AddToOutboxAsync(
+                    adminEmail,
+                    "Создан новый пользователь",
+                    $"В системе создан новый пользователь:\nЛогин: {userName}\nEmail: {request.Email}\nПолное имя: {request.FullName}",
+                    NotificationType.AdminNotification);
+            }
+
+            await _outboxService.AddToOutboxAsync(
+                request.Email,
+                "Добро пожаловать в MedManage",
+                $"Ваш аккаунт создан.\n\nЛогин: {userName}\nПароль: {password}\n\nПриятного пользования!.",
+                NotificationType.UserCredentials,
+                user.UserId);
+
+            return _mapper.Map<UserDTO>(user);
+        }
+
         public async Task<IEnumerable<UserDTO>> GetAllUsersExceptAsync()
         {
             var userId = GetCurrentUserId();
@@ -38,7 +91,6 @@ namespace MedManage.Application.Services
             return _mapper.Map<IEnumerable<UserDTO>>(filteredUsers);
         }
 
-        /// <inheritdoc />
         public async Task UpdateUserInfoAsync(UserDTO updatedUser)
         {
             if (updatedUser == null)
@@ -58,35 +110,27 @@ namespace MedManage.Application.Services
             var user = await _userRepository.GetUserByIdAsync(userId);
             return _mapper.Map<UserDTO>(user);
         }
-        
-        private Guid GetCurrentUserId()
-        {
-            var userIdClaim = _httpContextAccessor.HttpContext?.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (!Guid.TryParse(userIdClaim, out var userId))
-                throw new UnauthorizedAccessException("Invalid user");
-            return userId;
-        }
-        
+
         public async Task UpdateUserRoleAsync(UserDTO updatedUser, UserRole newRole)
         {
             if (updatedUser == null) throw new ArgumentNullException(nameof(updatedUser));
-            
+
             var currentUserId = GetCurrentUserId();
             var currentUser = await _userRepository.GetByIdAsync(currentUserId);
             if (currentUser.Role < UserRole.Admin)
                 throw new UnauthorizedAccessException("Недостаточно прав для изменения роли");
             if (newRole > currentUser.Role)
                 throw new UnauthorizedAccessException("Нельзя назначить роль выше своей");
-            
+
             var existingUser = await _userRepository.GetByIdAsync(updatedUser.UserId);
             existingUser.Role = newRole;
             await _userRepository.UpdateAsync(existingUser);
         }
-        
+
         public async Task UpdateUserPhoneNumberAsync(UserDTO updatedUser)
         {
-            if (updatedUser == null)  throw new ArgumentNullException(nameof(updatedUser));
-            
+            if (updatedUser == null) throw new ArgumentNullException(nameof(updatedUser));
+
             var currentUserId = GetCurrentUserId();
             if (updatedUser.UserId != currentUserId)
             {
@@ -94,14 +138,13 @@ namespace MedManage.Application.Services
                 if (currentUser.Role < UserRole.Admin)
                     throw new UnauthorizedAccessException("Недостаточно прав для изменения номера");
             }
-            
+
             var existingUser = await _userRepository.GetByIdAsync(updatedUser.UserId);
-            if (existingUser == null)  throw new InvalidOperationException($"{updatedUser.UserId} - такого пользователя нет.");
+            if (existingUser == null) throw new InvalidOperationException($"{updatedUser.UserId} - такого пользователя нет.");
             existingUser.PhoneNumber = updatedUser.PhoneNumber;
             await _userRepository.UpdateAsync(existingUser);
         }
-        
-        /// <inheritdoc />
+
         public string GetUserNameFromToken()
         {
             var nameClaim = _httpContextAccessor.HttpContext?.User.FindFirst("name")?.Value;
@@ -109,6 +152,14 @@ namespace MedManage.Application.Services
                 throw new InvalidOperationException("Имя пользователя отсутствует в токене.");
 
             return nameClaim;
+        }
+
+        private Guid GetCurrentUserId()
+        {
+            var userIdClaim = _httpContextAccessor.HttpContext?.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (!Guid.TryParse(userIdClaim, out var userId))
+                throw new UnauthorizedAccessException("Invalid user");
+            return userId;
         }
     }
 }

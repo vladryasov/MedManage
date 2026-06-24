@@ -1,9 +1,6 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
-using System.Text;
 using AutoMapper;
-using Microsoft.Extensions.Configuration;
-using Microsoft.IdentityModel.Tokens;
 using MedManage.Application.DTOs;
 using MedManage.Application.Interfaces;
 using MedManage.Domain.Enums;
@@ -15,92 +12,104 @@ namespace MedManage.Application.Services;
 public class AuthService : IAuthService
 {
     private readonly IUserRepository _userRepository;
+    private readonly IPasswordService _passwordService;
+    private readonly ITokenService _tokenService;
     private readonly IMapper _mapper;
-    private readonly IConfiguration _configuration;
     private readonly ILogger<AuthService> _logger;
 
     public AuthService(
         IUserRepository userRepository,
+        IPasswordService passwordService,
+        ITokenService tokenService,
         IMapper mapper,
-        IConfiguration configuration,
         ILogger<AuthService> logger)
     {
         _userRepository = userRepository;
+        _passwordService = passwordService;
+        _tokenService = tokenService;
         _mapper = mapper;
-        _configuration = configuration;
         _logger = logger;
     }
 
-    public async Task<UserDTO> LoginAsync(string token)
+    public async Task<AuthResponse> LoginAsync(LoginRequest request)
     {
-        var handler = new JwtSecurityTokenHandler();
-        var key = Encoding.UTF8.GetBytes(_configuration["Jwt:Key"] ?? "");
-
-        var validationParameters = new TokenValidationParameters
+        var user = await _userRepository.FindByUserNameAsync(request.UserName);
+        if (user == null)
         {
-            ValidateIssuerSigningKey = true,
-            IssuerSigningKey = new SymmetricSecurityKey(key),
-            ValidateIssuer = false,
-            ValidateAudience = false,
-            ValidateLifetime = false,
-            RequireExpirationTime = false,
+            _logger.LogWarning("Login failed: user {UserName} not found", request.UserName);
+            throw new UnauthorizedAccessException("Неверное имя пользователя или пароль");
+        }
+
+        if (string.IsNullOrWhiteSpace(user.PasswordHash))
+        {
+            _logger.LogWarning("Login failed: user {UserName} has no password set", request.UserName);
+            throw new UnauthorizedAccessException("Пароль не установлен. Обратитесь к администратору.");
+        }
+
+        if (!_passwordService.Verify(request.Password, user.PasswordHash))
+        {
+            _logger.LogWarning("Login failed: invalid password for {UserName}", request.UserName);
+            throw new UnauthorizedAccessException("Неверное имя пользователя или пароль");
+        }
+
+        var claims = new List<Claim>
+        {
+            new(ClaimTypes.NameIdentifier, user.UserId.ToString()),
+            new(ClaimTypes.Role, user.Role.ToString()),
+            new("name", user.UserName)
         };
 
-        try
+        var accessToken = _tokenService.GenerateAccessToken(claims);
+        var refreshToken = _tokenService.GenerateRefreshToken(claims);
+
+        var userDto = _mapper.Map<UserDTO>(user);
+        _logger.LogInformation("Login successful for user {UserId}", user.UserId);
+
+        return new AuthResponse
         {
-            var principal = handler.ValidateToken(token, validationParameters, out _);
+            AccessToken = accessToken,
+            RefreshToken = refreshToken,
+            User = userDto
+        };
+    }
 
-            var userIdClaim = principal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-
-            if (!Guid.TryParse(userIdClaim, out var userId))
-            {
-                _logger.LogWarning("Failed to parse sub claim as GUID");
-                throw new UnauthorizedAccessException("Недействительный токен");
-            }
-
-            var user = await _userRepository.GetByIdAsync(userId);
-            if (user == null)
-            {
-                _logger.LogWarning("User not found in DB: {UserId}", userId);
-                throw new UnauthorizedAccessException("Пользователь не найден");
-            }
-
-            var userDto = _mapper.Map<UserDTO>(user);
-
-            var roleClaim = principal.FindFirst(ClaimTypes.Role)?.Value
-                            ?? principal.FindFirst("role")?.Value;
-
-            if (Enum.TryParse<UserRole>(roleClaim, ignoreCase: true, out var jwtRole))
-            {
-                if (jwtRole != userDto.Role)
-                {
-                    _logger.LogWarning("Role mismatch: claim role={JwtRole}, DB role={DbRole}", jwtRole, userDto.Role);
-                    throw new UnauthorizedAccessException("Несоответствие данных токена");
-                }
-            }
-            else
-            {
-                var adminClaim = principal.FindFirst("admin")?.Value;
-                var jwtAdmin = bool.TryParse(adminClaim, out var admin) && admin;
-
-                if (jwtAdmin != (userDto.Role >= UserRole.Admin))
-                {
-                    _logger.LogWarning("Role mismatch: admin claim={JwtAdmin}, DB role >= Admin={DbAdmin}", jwtAdmin, userDto.Role >= UserRole.Admin);
-                    throw new UnauthorizedAccessException("Несоответствие данных токена");
-                }
-            }
-
-            _logger.LogInformation("Login successful for user {UserId}", userId);
-            return userDto;
-        }
-        catch (UnauthorizedAccessException)
+    public async Task<AuthResponse> RefreshTokenAsync(string refreshToken)
+    {
+        var principal = _tokenService.ValidateRefreshToken(refreshToken);
+        if (principal == null)
         {
-            throw;
+            _logger.LogWarning("Refresh failed: invalid token");
+            throw new UnauthorizedAccessException("Недействительный токен обновления");
         }
-        catch (Exception ex)
+
+        var userIdClaim = principal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (!Guid.TryParse(userIdClaim, out var userId))
         {
-            _logger.LogError(ex, "JWT validation failed: {Message}", ex.Message);
-            throw new UnauthorizedAccessException("Недействительный токен");
+            throw new UnauthorizedAccessException("Недействительный токен обновления");
         }
+
+        var user = await _userRepository.GetByIdAsync(userId);
+        if (user == null)
+        {
+            throw new UnauthorizedAccessException("Пользователь не найден");
+        }
+
+        var claims = new List<Claim>
+        {
+            new(ClaimTypes.NameIdentifier, user.UserId.ToString()),
+            new(ClaimTypes.Role, user.Role.ToString()),
+            new("name", user.UserName)
+        };
+
+        var newAccessToken = _tokenService.GenerateAccessToken(claims);
+        var newRefreshToken = _tokenService.GenerateRefreshToken(claims);
+        var userDto = _mapper.Map<UserDTO>(user);
+
+        return new AuthResponse
+        {
+            AccessToken = newAccessToken,
+            RefreshToken = newRefreshToken,
+            User = userDto
+        };
     }
 }

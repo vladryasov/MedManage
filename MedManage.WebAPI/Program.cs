@@ -2,12 +2,15 @@ using MedManage.Application.Extensions;
 using MedManage.Identity.Extensions;
 using MedManage.Indentity.Extensions;
 using MedManage.Persistence.Extensions;
+using MedManage.WebAPI.BackgroundServices;
 using UserManagement.Application.Filters.ExceptionHadling;
 
 public class Program
 {
     public static void Main(string[] args)
     {
+        DotNetEnv.Env.Load();
+
         var builder = WebApplication.CreateBuilder(args);
 
         builder.Services.AddPersistenceServices(builder.Configuration);
@@ -19,6 +22,9 @@ public class Program
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddSwaggerGen();
         builder.Services.AddSwaggerAuthentication();
+
+        builder.Services.AddHostedService<OutboxProcessorService>();
+        builder.Services.AddHostedService<OutboxCleanupService>();
 
         builder.Services.AddCors(options =>
         {

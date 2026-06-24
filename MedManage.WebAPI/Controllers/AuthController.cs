@@ -22,18 +22,34 @@ public class AuthController : ControllerBase
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginRequest request)
     {
-        _logger.LogInformation("Login attempt received, token length: {Len}", request.Token.Length);
-
         try
         {
-            var userDto = await _authService.LoginAsync(request.Token);
-            _logger.LogInformation("Login successful for user {UserId}", userDto.UserId);
-            return Ok(userDto);
+            var response = await _authService.LoginAsync(request);
+            return Ok(response);
         }
         catch (UnauthorizedAccessException ex)
         {
-            _logger.LogWarning("Login failed: {Message}", ex.Message);
-            return BadRequest(new { error = ex.Message });
+            return Unauthorized(new { error = ex.Message });
         }
+    }
+
+    [HttpPost("refresh")]
+    public async Task<IActionResult> Refresh([FromBody] RefreshRequest request)
+    {
+        try
+        {
+            var response = await _authService.RefreshTokenAsync(request.RefreshToken);
+            return Ok(response);
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return Unauthorized(new { error = ex.Message });
+        }
+    }
+
+    [HttpPost("logout")]
+    public IActionResult Logout()
+    {
+        return Ok(new { message = "Выход выполнен" });
     }
 }

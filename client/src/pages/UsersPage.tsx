@@ -1,9 +1,10 @@
 import { useState, useRef, useEffect } from 'react';
-import { Card, Table, Tag, Select, message, Typography, Pagination, Space, Button, Input } from 'antd';
-import { EditOutlined, CheckOutlined, CloseOutlined } from '@ant-design/icons';
+import { Card, Table, Tag, Select, message, Typography, Pagination, Space, Button, Input, Modal, Form } from 'antd';
+import { EditOutlined, CheckOutlined, CloseOutlined, PlusOutlined } from '@ant-design/icons';
 import { useAuth } from '../contexts/AuthContext';
-import { useUsers, useUpdateUserRole, useUpdateUserPhone } from '../hooks/useUsers';
-import { UserRole, userRoleLabels, type UserDTO } from '../types';
+import { useUsers, useUpdateUserRole, useUpdateUserPhone, useCreateUser } from '../hooks/useUsers';
+import { useOrganizations } from '../hooks/useOrganizations';
+import { UserRole, userRoleLabels, type UserDTO, type CreateUserRequest } from '../types';
 
 const { Title } = Typography;
 
@@ -17,6 +18,8 @@ const roleColors: Record<number, string> = {
 export default function UsersPage() {
   const [current, setCurrent] = useState(1);
   const [pageSize, setPageSize] = useState(10);
+  const [createOpen, setCreateOpen] = useState(false);
+  const [createForm] = Form.useForm<CreateUserRequest>();
 
   const tableWrapperRef = useRef<HTMLDivElement>(null);
   const [scrollY, setScrollY] = useState(400);
@@ -33,8 +36,10 @@ export default function UsersPage() {
   }, []);
 
   const { data: users, isLoading } = useUsers();
+  const { data: organizations } = useOrganizations();
   const updateRoleMutation = useUpdateUserRole();
   const updatePhoneMutation = useUpdateUserPhone();
+  const createUserMutation = useCreateUser();
   const { user: currentUser } = useAuth();
   const isAdmin = (currentUser?.role ?? 0) >= UserRole.Admin;
 
@@ -49,6 +54,20 @@ export default function UsersPage() {
       setEditingPhoneId(null);
     } catch {
       message.error('Ошибка при обновлении номера');
+    }
+  };
+
+  const handleCreateUser = async () => {
+    try {
+      const values = await createForm.validateFields();
+      await createUserMutation.mutateAsync(values);
+      message.success('Пользователь создан');
+      setCreateOpen(false);
+      createForm.resetFields();
+    } catch (err: unknown) {
+      if (err && typeof err === 'object' && 'errorFields' in err) return;
+      const apiError = err as { response?: { data?: { error?: string } } };
+      message.error(apiError?.response?.data?.error || 'Ошибка при создании пользователя');
     }
   };
 
@@ -161,41 +180,97 @@ export default function UsersPage() {
   ];
 
   return (
-    <Card
-      style={{ height: 'calc(100vh - 104px)' }}
-      styles={{ body: { height: '100%', display: 'flex', flexDirection: 'column', padding: 24 } }}
-    >
-      <Title level={4}>Пользователи</Title>
-
-      <div
-        ref={tableWrapperRef}
-        style={{ flex: 1, minHeight: 0, overflow: 'hidden' }}
+    <>
+      <Card
+        style={{ height: 'calc(100vh - 104px)' }}
+        styles={{ body: { height: '100%', display: 'flex', flexDirection: 'column', padding: 24 } }}
       >
-        <Table
-          dataSource={paginatedData}
-          columns={columns}
-          rowKey="userId"
-          loading={isLoading}
-          pagination={false}
-          scroll={{ y: scrollY }}
-        />
-      </div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+          <Title level={4} style={{ margin: 0 }}>Пользователи</Title>
+          {isAdmin && (
+            <Button type="primary" icon={<PlusOutlined />} onClick={() => setCreateOpen(true)}>
+              Создать пользователя
+            </Button>
+          )}
+        </div>
 
-      <div style={{ flexShrink: 0, display: 'flex', justifyContent: 'flex-end', paddingTop: 16 }}>
-        <Pagination
-          current={current}
-          pageSize={pageSize}
-          total={users?.length ?? 0}
-          showSizeChanger
-          pageSizeOptions={['10', '20', '50', '100']}
-          showTotal={(total, range) => `${range[0]}-${range[1]} из ${total}`}
-          onChange={(page: number) => setCurrent(page)}
-          onShowSizeChange={(_: number, size: number) => {
-            setPageSize(size);
-            setCurrent(1);
-          }}
-        />
-      </div>
-    </Card>
+        <div
+          ref={tableWrapperRef}
+          style={{ flex: 1, minHeight: 0, overflow: 'hidden' }}
+        >
+          <Table
+            dataSource={paginatedData}
+            columns={columns}
+            rowKey="userId"
+            loading={isLoading}
+            pagination={false}
+            scroll={{ y: scrollY }}
+          />
+        </div>
+
+        <div style={{ flexShrink: 0, display: 'flex', justifyContent: 'flex-end', paddingTop: 16 }}>
+          <Pagination
+            current={current}
+            pageSize={pageSize}
+            total={users?.length ?? 0}
+            showSizeChanger
+            pageSizeOptions={['10', '20', '50', '100']}
+            showTotal={(total, range) => `${range[0]}-${range[1]} из ${total}`}
+            onChange={(page: number) => setCurrent(page)}
+            onShowSizeChange={(_: number, size: number) => {
+              setPageSize(size);
+              setCurrent(1);
+            }}
+          />
+        </div>
+      </Card>
+
+      <Modal
+        title="Создать пользователя"
+        open={createOpen}
+        onOk={handleCreateUser}
+        onCancel={() => {
+          setCreateOpen(false);
+          createForm.resetFields();
+        }}
+        confirmLoading={createUserMutation.isPending}
+      >
+        <Form form={createForm} layout="vertical" style={{ marginTop: 16 }}>
+          <Form.Item
+            name="email"
+            label="Email"
+            rules={[
+              { required: true, message: 'Введите email' },
+              { type: 'email', message: 'Некорректный email' },
+            ]}
+          >
+            <Input />
+          </Form.Item>
+          <Form.Item
+            name="fullName"
+            label="Полное имя"
+            rules={[{ required: true, message: 'Введите полное имя' }]}
+          >
+            <Input />
+          </Form.Item>
+          <Form.Item name="phoneNumber" label="Телефон">
+            <Input />
+          </Form.Item>
+          <Form.Item name="organizationId" label="Организация">
+            <Select
+              allowClear
+              placeholder="Выберите организацию"
+              loading={!organizations}
+            >
+              {(organizations ?? []).map((org) => (
+                <Select.Option key={org.organizationId} value={org.organizationId}>
+                  {org.name}
+                </Select.Option>
+              ))}
+            </Select>
+          </Form.Item>
+        </Form>
+      </Modal>
+    </>
   );
 }

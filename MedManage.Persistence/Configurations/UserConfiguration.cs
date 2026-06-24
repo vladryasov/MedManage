@@ -20,6 +20,13 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
             .IsRequired()
             .HasMaxLength(100);
 
+        builder.Property(u => u.Email)
+            .IsRequired()
+            .HasMaxLength(256);
+
+        builder.Property(u => u.PasswordHash)
+            .HasMaxLength(512);
+
         builder.Property(u => u.PhoneNumber)
             .IsRequired()
             .HasMaxLength(20);
@@ -37,6 +44,9 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
             .OnDelete(DeleteBehavior.SetNull);
 
         builder.HasIndex(u => u.UserName)
+            .IsUnique();
+
+        builder.HasIndex(u => u.Email)
             .IsUnique();
 
         builder.HasIndex(u => u.OrganizationId);

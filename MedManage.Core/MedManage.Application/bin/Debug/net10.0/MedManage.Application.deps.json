@@ -8,6 +8,8 @@
     ".NETCoreApp,Version=v10.0": {
       "MedManage.Application/1.0.0": {
         "dependencies": {
+          "BCrypt.Net-Next": "4.2.0",
+          "MailKit": "4.17.0",
           "MedManage.Domain": "1.0.0",
           "MedManage.Persistence": "1.0.0",
           "System.IdentityModel.Tokens.Jwt": "8.19.1"
@@ -38,11 +40,38 @@
           }
         }
       },
+      "BCrypt.Net-Next/4.2.0": {
+        "runtime": {
+          "lib/net10.0/BCrypt-Net-Next.dll": {
+            "assemblyVersion": "4.2.0.0",
+            "fileVersion": "4.2.0.0"
+          }
+        }
+      },
+      "BouncyCastle.Cryptography/2.6.2": {
+        "runtime": {
+          "lib/net6.0/BouncyCastle.Cryptography.dll": {
+            "assemblyVersion": "2.0.0.0",
+            "fileVersion": "2.6.2.46322"
+          }
+        }
+      },
       "Castle.Core/5.2.1": {
         "runtime": {
           "lib/net6.0/Castle.Core.dll": {
             "assemblyVersion": "5.0.0.0",
             "fileVersion": "5.2.1.0"
+          }
+        }
+      },
+      "MailKit/4.17.0": {
+        "dependencies": {
+          "MimeKit": "4.17.0"
+        },
+        "runtime": {
+          "lib/net10.0/MailKit.dll": {
+            "assemblyVersion": "4.17.0.0",
+            "fileVersion": "4.17.0.0"
           }
         }
       },
@@ -126,6 +155,17 @@
           }
         }
       },
+      "MimeKit/4.17.0": {
+        "dependencies": {
+          "BouncyCastle.Cryptography": "2.6.2"
+        },
+        "runtime": {
+          "lib/net10.0/MimeKit.dll": {
+            "assemblyVersion": "4.17.0.0",
+            "fileVersion": "4.17.0.0"
+          }
+        }
+      },
       "Npgsql/10.0.3": {
         "runtime": {
           "lib/net10.0/Npgsql.dll": {
@@ -175,6 +215,7 @@
         "dependencies": {
           "AutoMapper": "16.1.1",
           "AutoMapper.Extensions.ExpressionMapping": "11.0.0",
+          "BCrypt.Net-Next": "4.2.0",
           "Castle.Core": "5.2.1",
           "MedManage.Domain": "1.0.0",
           "Microsoft.EntityFrameworkCore": "10.0.8",
@@ -210,12 +251,33 @@
       "path": "automapper.extensions.expressionmapping/11.0.0",
       "hashPath": "automapper.extensions.expressionmapping.11.0.0.nupkg.sha512"
     },
+    "BCrypt.Net-Next/4.2.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-gwLD2KfCuwQesP17aVh4h6lpiMPEVt5Lbpndo0ej903hNUUTtyxt3ARdDjmuydBRTAUICc7OVKVbaOvc6SQYXA==",
+      "path": "bcrypt.net-next/4.2.0",
+      "hashPath": "bcrypt.net-next.4.2.0.nupkg.sha512"
+    },
+    "BouncyCastle.Cryptography/2.6.2": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-7oWOcvnntmMKNzDLsdxAYqApt+AjpRpP2CShjMfIa3umZ42UQMvH0tl1qAliYPNYO6vTdcGMqnRrCPmsfzTI1w==",
+      "path": "bouncycastle.cryptography/2.6.2",
+      "hashPath": "bouncycastle.cryptography.2.6.2.nupkg.sha512"
+    },
     "Castle.Core/5.2.1": {
       "type": "package",
       "serviceable": true,
       "sha512": "sha512-wHARzQA695jwwKreOzNsq54KiGqKP38tv8hi8e2FXDEC/sA6BtrX90tVPDkOfVu13PbEzr00TCV8coikl+D1Iw==",
       "path": "castle.core/5.2.1",
       "hashPath": "castle.core.5.2.1.nupkg.sha512"
+    },
+    "MailKit/4.17.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-1nUAVLxM9fhT/78we6/AGsCesnpn5dRNLLeRqOfr52Wnk87pzVwo5YMTMyqnmoXrYc7piGhmayiMA/OgDluIjg==",
+      "path": "mailkit/4.17.0",
+      "hashPath": "mailkit.4.17.0.nupkg.sha512"
     },
     "Microsoft.Bcl.Cryptography/10.0.2": {
       "type": "package",
@@ -272,6 +334,13 @@
       "sha512": "sha512-KDiuSLXud2AFVNAOottd8ztVysfPeHyr4r8gofU3/VKUXlI7oytzGTnPsNJ/B3nui17rgz8wAdWNJOtzPjkUxw==",
       "path": "microsoft.identitymodel.tokens/8.19.1",
       "hashPath": "microsoft.identitymodel.tokens.8.19.1.nupkg.sha512"
+    },
+    "MimeKit/4.17.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-h/KXsCreJf8RpR/PSAtlbvYtZFndp9N8Wn1Bs248AL7ITyhn+AiIY5bLTvt60tbN2mu6g8KadtBNWygTji2lqg==",
+      "path": "mimekit/4.17.0",
+      "hashPath": "mimekit.4.17.0.nupkg.sha512"
     },
     "Npgsql/10.0.3": {
       "type": "package",

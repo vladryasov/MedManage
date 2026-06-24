@@ -26,7 +26,7 @@ namespace MedManage.WebAPI.Controllers
             var user = await _userService.GetCurrentUserAsync();
             return Ok(user);
         }
-        
+
         [HttpGet("users/all")]
         public async Task<IActionResult> GetAllUsersExceptAsync()
         {
@@ -47,19 +47,37 @@ namespace MedManage.WebAPI.Controllers
             var userName = _userService.GetUserNameFromToken();
             return Ok(new { userName });
         }
-        
+
         [HttpPatch("users/{userId}/Role")]
         public async Task<IActionResult> UpdateUserRole([FromBody] UserDTO updatedUser, UserRole newRole)
         {
             await _userService.UpdateUserRoleAsync(updatedUser, newRole);
             return Ok("роль обновлена успешно");
         }
-        
+
         [HttpPatch("users/{userId}/updateNumber")]
         public async Task<IActionResult> UpdateUserPhoneNumber([FromBody] UserDTO updatedUser)
         {
             await _userService.UpdateUserPhoneNumberAsync(updatedUser);
             return Ok("Номер обновлен");
+        }
+
+        [HttpPost("create")]
+        public async Task<IActionResult> CreateUser([FromBody] CreateUserRequest request)
+        {
+            try
+            {
+                var user = await _userService.CreateUserAsync(request);
+                return Ok(user);
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return Forbid();
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { error = ex.Message });
+            }
         }
     }
 }

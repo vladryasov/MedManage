@@ -51,9 +51,26 @@ export interface UserDTO {
   userId: string;
   userName: string;
   fullName: string;
+  email: string;
   role: number;
   createdAt: string;
   phoneNumber: string;
+}
+
+export interface OrganizationDTO {
+  organizationId: string;
+  name: string;
+  address: string;
+  phoneNumber: string;
+  email: string;
+  createdAt: string;
+}
+
+export interface CreateUserRequest {
+  email: string;
+  fullName: string;
+  phoneNumber?: string;
+  organizationId?: string;
 }
 
 export interface PaginatedQueryParams {

@@ -14,11 +14,17 @@ public interface IUserRepository
 
     Task<User> GetByIdAsync(Guid userId);
 
+    Task<User?> FindByEmailAsync(string email);
+
+    Task<User?> FindByUserNameAsync(string userName);
+
     Task<User> AddAsync(
         string userName,
         string fullName,
+        string email,
         UserRole role,
         string phoneNumber,
+        string? passwordHash = null,
         Guid? organizationId = null);
 
     Task UpdateAsync(User user);

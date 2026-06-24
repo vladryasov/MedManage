@@ -12,6 +12,7 @@ public interface IAppDbContext
     DbSet<Product> Products { get; }
     DbSet<Inventory> Inventories { get; }
     DbSet<Announcement> Announcements { get; }
+    DbSet<NotificationOutbox> NotificationOutbox { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
     int SaveChanges();

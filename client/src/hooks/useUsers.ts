@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getAllUsersExcept, updateUserRole, updateUserPhone, updateUserInfo } from '../api/users';
-import type { UserDTO, UserRole } from '../types';
+import { getAllUsersExcept, updateUserRole, updateUserPhone, updateUserInfo, createUser } from '../api/users';
+import type { UserDTO, UserRole, CreateUserRequest } from '../types';
 
 export function useUsers() {
   return useQuery({
@@ -34,5 +34,15 @@ export function useUpdateUserInfo() {
   return useMutation({
     mutationFn: (user: UserDTO) => updateUserInfo(user),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['currentUser'] }),
+  });
+}
+
+export function useCreateUser() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (request: CreateUserRequest) => createUser(request),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+    },
   });
 }

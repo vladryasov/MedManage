@@ -98,6 +98,60 @@ namespace MedManage.Persistence.Migrations
                     b.ToTable("Inventories", (string)null);
                 });
 
+            modelBuilder.Entity("MedManage.Domain.Entities.NotificationOutbox", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Body")
+                        .IsRequired()
+                        .HasMaxLength(4000)
+                        .HasColumnType("character varying(4000)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ErrorMessage")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<string>("RecipientEmail")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<Guid?>("RecipientUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("RetryCount")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("SentAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Subject")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedAt");
+
+                    b.HasIndex("RecipientUserId");
+
+                    b.HasIndex("Status");
+
+                    b.ToTable("NotificationOutbox", (string)null);
+                });
+
             modelBuilder.Entity("MedManage.Domain.Entities.Organization", b =>
                 {
                     b.Property<Guid>("OrganizationId")
@@ -181,6 +235,11 @@ namespace MedManage.Persistence.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
                     b.Property<string>("FullName")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -188,6 +247,10 @@ namespace MedManage.Persistence.Migrations
 
                     b.Property<Guid?>("OrganizationId")
                         .HasColumnType("uuid");
+
+                    b.Property<string>("PasswordHash")
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)");
 
                     b.Property<string>("PhoneNumber")
                         .IsRequired()
@@ -203,6 +266,9 @@ namespace MedManage.Persistence.Migrations
                         .HasColumnType("character varying(64)");
 
                     b.HasKey("UserId");
+
+                    b.HasIndex("Email")
+                        .IsUnique();
 
                     b.HasIndex("OrganizationId");
 
@@ -239,6 +305,16 @@ namespace MedManage.Persistence.Migrations
                         .IsRequired();
 
                     b.Navigation("Product");
+                });
+
+            modelBuilder.Entity("MedManage.Domain.Entities.NotificationOutbox", b =>
+                {
+                    b.HasOne("MedManage.Domain.Entities.User", "RecipientUser")
+                        .WithMany()
+                        .HasForeignKey("RecipientUserId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("RecipientUser");
                 });
 
             modelBuilder.Entity("MedManage.Domain.Entities.Product", b =>

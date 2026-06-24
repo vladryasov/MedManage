@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Card, Input, Button, Typography, message, Form, theme } from 'antd';
-import { KeyOutlined } from '@ant-design/icons';
+import { UserOutlined, LockOutlined } from '@ant-design/icons';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { login } from '../api/auth';
@@ -8,22 +8,23 @@ import { login } from '../api/auth';
 const { Title, Text } = Typography;
 
 export default function LoginPage() {
-  const { token } = theme.useToken();
-  const [jwt, setJwt] = useState('');
+  const { token: themeToken } = theme.useToken();
+  const [userName, setUserName] = useState('');
+  const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const { loginUser } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async () => {
-    if (!jwt.trim()) {
-      message.error('Введите JWT токен');
+    if (!userName.trim() || !password.trim()) {
+      message.error('Введите имя пользователя и пароль');
       return;
     }
     setLoading(true);
 
     try {
-      const user = await login(jwt.trim());
-      loginUser(jwt.trim(), user);
+      const response = await login(userName.trim(), password);
+      loginUser(response.accessToken, response.refreshToken, response.user);
       navigate('/');
     } catch (err: unknown) {
       const apiError = err as { response?: { data?: { error?: string } } };
@@ -40,23 +41,30 @@ export default function LoginPage() {
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'center',
-        background: token.colorBgLayout,
+        background: themeToken.colorBgLayout,
       }}
     >
       <Card style={{ width: 420, boxShadow: '0 2px 8px rgba(0,0,0,0.09)' }}>
         <Title level={3} style={{ textAlign: 'center' }}>
-          <KeyOutlined /> MedManage
+          MedManage
         </Title>
         <Text type="secondary" style={{ display: 'block', textAlign: 'center', marginBottom: 24 }}>
-          Введите ваш JWT токен для входа
+          Введите имя пользователя и пароль
         </Text>
         <Form onFinish={handleSubmit}>
-          <Input.TextArea
-            rows={4}
-            value={jwt}
-            onChange={(e) => setJwt(e.target.value)}
-            placeholder="Вставьте JWT токен..."
-            style={{ marginBottom: 16, fontFamily: 'monospace', fontSize: 12 }}
+          <Input
+            prefix={<UserOutlined />}
+            value={userName}
+            onChange={(e) => setUserName(e.target.value)}
+            placeholder="Имя пользователя"
+            style={{ marginBottom: 16 }}
+          />
+          <Input.Password
+            prefix={<LockOutlined />}
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="Пароль"
+            style={{ marginBottom: 16 }}
           />
           <Button type="primary" htmlType="submit" loading={loading} block>
             Войти

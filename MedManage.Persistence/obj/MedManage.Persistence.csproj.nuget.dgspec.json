@@ -552,6 +552,10 @@
               "target": "Package",
               "version": "[11.0.0, )"
             },
+            "BCrypt.Net-Next": {
+              "target": "Package",
+              "version": "[4.2.0, )"
+            },
             "Castle.Core": {
               "target": "Package",
               "version": "[5.2.1, )"
