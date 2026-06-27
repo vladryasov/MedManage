@@ -8,11 +8,11 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\..\MedManage.Persistence\MedManage.Persistence.csproj" />
       <ProjectReference Include="..\MedManage.Domain\MedManage.Domain.csproj" />
     </ItemGroup>
 
     <ItemGroup>
+      <PackageReference Include="AutoMapper" Version="16.1.1" />
       <PackageReference Include="BCrypt.Net-Next" Version="4.2.0" />
       <PackageReference Include="MailKit" Version="4.17.0" />
       <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.19.1" />

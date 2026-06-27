@@ -1,5 +1,5 @@
-import { useState, useRef, useEffect } from 'react';
-import { useAnnouncements } from '../hooks/useAnnouncements';
+import { useState } from 'react';
+import { usePaginatedAnnouncements } from '../hooks/useAnnouncements';
 import {
   Card,
   Table,
@@ -17,11 +17,14 @@ import { PlusOutlined, SearchOutlined, DeleteOutlined, EditOutlined } from '@ant
 import { useNavigate } from 'react-router-dom';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { deleteAnnouncement } from '../api/announcements';
+import { useAuth } from '../contexts/AuthContext';
 import {
   InventoryStatus,
   ProductType,
+  TypeOfSort,
   inventoryStatusLabels,
   productTypeLabels,
+  UserRole,
   type AnnouncementDTO,
 } from '../types';
 
@@ -38,7 +41,8 @@ const statusColors: Record<number, string> = {
 export default function AnnouncementsPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { data: announcements, isLoading } = useAnnouncements();
+  const { user } = useAuth();
+  const isAdmin = (user?.role ?? 0) >= UserRole.Admin;
 
   const [searchFilter, setSearchFilter] = useState('');
   const [productTypeFilter, setProductTypeFilter] = useState<ProductType>(ProductType.All);
@@ -46,55 +50,27 @@ export default function AnnouncementsPage() {
   const [current, setCurrent] = useState(1);
   const [pageSize, setPageSize] = useState(10);
 
-  const tableWrapperRef = useRef<HTMLDivElement>(null);
-  const [scrollY, setScrollY] = useState(400);
-
-  useEffect(() => {
-    const updateScrollY = () => {
-      if (tableWrapperRef.current) {
-        setScrollY(Math.max(200, tableWrapperRef.current.clientHeight - 46));
-      }
-    };
-    updateScrollY();
-    window.addEventListener('resize', updateScrollY);
-    return () => window.removeEventListener('resize', updateScrollY);
-  }, []);
+  const { data, isLoading } = usePaginatedAnnouncements({
+    pageNumber: current,
+    pageSize,
+    searchFilter: searchFilter || undefined,
+    productType: productTypeFilter !== ProductType.All ? productTypeFilter : undefined,
+    statusInventory: statusFilter !== InventoryStatus.All ? statusFilter : undefined,
+  });
 
   const deleteMutation = useMutation({
     mutationFn: deleteAnnouncement,
     onSuccess: () => {
       message.success('Объявление удалено');
-      queryClient.invalidateQueries({ queryKey: ['announcements'] });
+      queryClient.invalidateQueries({ queryKey: ['announcements', 'paginated'] });
     },
   });
-
-  const filtered = (announcements ?? []).filter((a) => {
-    const matchesSearch =
-      !searchFilter ||
-      a.title.toLowerCase().includes(searchFilter.toLowerCase()) ||
-      a.content.toLowerCase().includes(searchFilter.toLowerCase());
-    const matchesType =
-      productTypeFilter === ProductType.All || a.typeProduct === productTypeFilter;
-    const matchesStatus =
-      statusFilter === InventoryStatus.All || a.statusInventory === statusFilter;
-    return matchesSearch && matchesType && matchesStatus;
-  });
-
-  const paginatedData = filtered.slice(
-    (current - 1) * pageSize,
-    current * pageSize,
-  );
-
-  useEffect(() => {
-    setCurrent(1);
-  }, [filtered.length]);
 
   const columns = [
     {
       title: 'Заголовок',
       dataIndex: 'title',
       key: 'title',
-      render: (text: string) => text,
     },
     {
       title: 'Автор',
@@ -120,25 +96,28 @@ export default function AnnouncementsPage() {
       dataIndex: 'views',
       key: 'views',
     },
-    {
-      title: 'Действия',
-      key: 'actions',
-      render: (_: unknown, record: AnnouncementDTO) => (
-        <Space onClick={(e) => e.stopPropagation()}>
-          <Button
-            icon={<EditOutlined />}
-            size="small"
-            onClick={() => navigate(`/announcements/${record.announcementId}`, { state: { startEditing: true } })}
-          />
-          <Popconfirm
-            title="Удалить?"
-            onConfirm={() => deleteMutation.mutate(record.announcementId)}
-          >
-            <Button icon={<DeleteOutlined />} size="small" danger />
-          </Popconfirm>
-        </Space>
-      ),
-    },
+    ...(isAdmin
+      ? [
+          {
+            title: 'Действия',
+            key: 'actions',
+            render: (_: unknown, record: AnnouncementDTO) => (
+              <span onClick={(e) => e.stopPropagation()} style={{ whiteSpace: 'nowrap' }}>
+                <EditOutlined
+                  style={{ cursor: 'pointer', marginRight: 12 }}
+                  onClick={() => navigate(`/announcements/${record.announcementId}`, { state: { startEditing: true } })}
+                />
+                <Popconfirm
+                  title="Удалить?"
+                  onConfirm={() => deleteMutation.mutate(record.announcementId)}
+                >
+                  <DeleteOutlined style={{ cursor: 'pointer', color: '#ff4d4f' }} />
+                </Popconfirm>
+              </span>
+            ),
+          },
+        ]
+      : []),
   ];
 
   return (
@@ -173,13 +152,16 @@ export default function AnnouncementsPage() {
             placeholder="Поиск..."
             prefix={<SearchOutlined />}
             value={searchFilter}
-            onChange={(e) => setSearchFilter(e.target.value)}
+            onChange={(e) => {
+              setSearchFilter(e.target.value);
+              setCurrent(1);
+            }}
             style={{ width: 240 }}
             allowClear
           />
           <Select
             value={productTypeFilter}
-            onChange={setProductTypeFilter}
+            onChange={(v) => { setProductTypeFilter(v); setCurrent(1); }}
             style={{ width: 180 }}
           >
             {Object.entries(productTypeLabels).map(([value, label]) => (
@@ -190,7 +172,7 @@ export default function AnnouncementsPage() {
           </Select>
           <Select
             value={statusFilter}
-            onChange={setStatusFilter}
+            onChange={(v) => { setStatusFilter(v); setCurrent(1); }}
             style={{ width: 160 }}
           >
             {Object.entries(inventoryStatusLabels).map(([value, label]) => (
@@ -202,17 +184,14 @@ export default function AnnouncementsPage() {
         </Space>
       </div>
 
-      <div
-        ref={tableWrapperRef}
-        style={{ flex: 1, minHeight: 0, overflow: 'hidden' }}
-      >
+      <div style={{ flex: 1, minHeight: 0, overflow: 'hidden' }}>
         <Table
-          dataSource={paginatedData}
+          dataSource={data?.items ?? []}
           columns={columns}
           rowKey="announcementId"
           loading={isLoading}
           pagination={false}
-          scroll={{ y: scrollY }}
+          scroll={{ y: 550 }}
           onRow={(record: AnnouncementDTO) => ({
             onClick: () => navigate(`/announcements/${record.announcementId}`),
             style: { cursor: 'pointer' },
@@ -224,7 +203,7 @@ export default function AnnouncementsPage() {
         <Pagination
           current={current}
           pageSize={pageSize}
-          total={filtered.length}
+          total={data?.totalCount ?? 0}
           showSizeChanger
           pageSizeOptions={['10', '20', '50', '100']}
           showTotal={(total, range) => `${range[0]}-${range[1]} из ${total}`}

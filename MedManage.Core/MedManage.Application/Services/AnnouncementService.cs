@@ -1,8 +1,4 @@
-using System.IdentityModel.Tokens.Jwt;
 using AutoMapper;
-using AutoMapper.QueryableExtensions;
-using Microsoft.EntityFrameworkCore;
-using AutoMapper.Extensions.ExpressionMapping;
 using MedManage.Application.DTOs;
 using MedManage.Application.Exceptions;
 using MedManage.Application.Interfaces;
@@ -11,12 +7,10 @@ using MedManage.Domain.Interfaces;
 using MedManage.Domain.Enums;
 using Microsoft.AspNetCore.Http;
 using System.Security.Claims;
+using MedManage.Domain.Common;
 
 namespace MedManage.Application.Services
 {
-    /// <summary>
-    /// Сервис для управления объявлениями.
-    /// </summary>
     public class AnnouncementService : IAnnouncementService
     {
         private readonly IMapper _mapper;
@@ -24,9 +18,6 @@ namespace MedManage.Application.Services
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly IUserRepository _userRepository;
 
-        /// <summary>
-        /// Конструктор сервиса для управления объявлениями.
-        /// </summary>
         public AnnouncementService(
             IMapper mapper,
             IAnnouncementRepository announcementRepository,
@@ -39,33 +30,32 @@ namespace MedManage.Application.Services
             _userRepository = userRepository;
         }
 
-        /// <inheritdoc />
         public async Task<IEnumerable<AnnouncementDTO>> GetAllAnnouncementsAsync()
         {
             var announcements = await _announcementRepository.GetAllAsync();
             return _mapper.Map<IEnumerable<AnnouncementDTO>>(announcements);
         }
 
-        /// <inheritdoc />
         public async Task<AnnouncementDTO> GetAnnouncementByIdAsync(Guid announcementId)
         {
+            await _announcementRepository.IncrementViewsAsync(announcementId);
+
             var announcement = await _announcementRepository.GetByIdAsync(announcementId);
             if (announcement == null)
                 throw new AnnouncementNotFoundException($"Объявление с ID {announcementId} не найдено.");
+
             return _mapper.Map<AnnouncementDTO>(announcement);
         }
 
-        /// <inheritdoc />
-        public async Task<IEnumerable<AnnouncementDTO>> GetAllAnnouncementsPaginatedAsync(
+        public async Task<PaginatedResult<AnnouncementDTO>> GetAllAnnouncementsPaginatedAsync(
             int pageNumber,
             int pageSize,
             TypeOfSort sortBy,
             string searchFilter,
             ProductType productType,
-            InventoryStatus statusInventory,
-            int views)
+            InventoryStatus statusInventory)
         {
-            var announcements = _announcementRepository.GetPaginated(
+            var result = await _announcementRepository.GetPaginatedAsync(
                 pageNumber,
                 pageSize,
                 sortBy,
@@ -73,11 +63,13 @@ namespace MedManage.Application.Services
                 productType,
                 statusInventory);
 
-            var projectedAnnouncements = announcements.ProjectTo<AnnouncementDTO>(_mapper.ConfigurationProvider);
-            return await projectedAnnouncements.ToListAsync();
+            return new PaginatedResult<AnnouncementDTO>
+            {
+                Items = _mapper.Map<List<AnnouncementDTO>>(result.Items),
+                TotalCount = result.TotalCount
+            };
         }
 
-        /// <inheritdoc />
         public async Task<AnnouncementDTO> CreateNewAnnouncementAsync(AnnouncementDTO announcementRequest)
         {
             var userIdClaim = _httpContextAccessor.HttpContext?.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
@@ -87,8 +79,10 @@ namespace MedManage.Application.Services
             var user = await _userRepository.GetByIdAsync(userId);
             if (user == null) throw new InvalidOperationException("Пользователь не найден.");
 
-            announcementRequest.AnnouncementId = Guid.NewGuid();
-            await _announcementRepository.CreateAsync(
+            if (announcementRequest.ExpirationDate.HasValue && announcementRequest.ExpirationDate.Value <= DateTimeOffset.UtcNow)
+                throw new InvalidOperationException("Дата истечения должна быть в будущем.");
+
+            var created = await _announcementRepository.CreateAsync(
                 announcementRequest.Title,
                 announcementRequest.Content,
                 userId,
@@ -97,11 +91,9 @@ namespace MedManage.Application.Services
                 user.OrganizationId,
                 announcementRequest.ExpirationDate);
 
-            return announcementRequest;
+            return _mapper.Map<AnnouncementDTO>(created);
         }
 
-
-        /// <inheritdoc />
         public async Task ChangeAnnouncementContentAsync(Guid announcementId, string content)
         {
             var announcement = await _announcementRepository.GetByIdAsync(announcementId);
@@ -114,7 +106,18 @@ namespace MedManage.Application.Services
             await _announcementRepository.UpdateAsync(announcement);
         }
 
-        /// <inheritdoc />
+        public async Task<IEnumerable<AnnouncementDTO>> GetMyAnnouncementsAsync()
+        {
+            var userId = GetCurrentUserId();
+            return await GetAnnouncementsByUserIdAsync(userId);
+        }
+
+        public async Task<IEnumerable<AnnouncementDTO>> GetAnnouncementsByUserIdAsync(Guid userId)
+        {
+            var announcements = await _announcementRepository.GetByUserIdAsync(userId);
+            return _mapper.Map<IEnumerable<AnnouncementDTO>>(announcements);
+        }
+
         public async Task DeleteAnnouncementAsync(Guid announcementId)
         {
             var announcement = await _announcementRepository.GetByIdAsync(announcementId);
@@ -124,7 +127,14 @@ namespace MedManage.Application.Services
             await _announcementRepository.DeleteAsync(announcement);
         }
 
-        /// <inheritdoc />
+        private Guid GetCurrentUserId()
+        {
+            var userIdClaim = _httpContextAccessor.HttpContext?.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (!Guid.TryParse(userIdClaim, out var userId))
+                throw new UnauthorizedAccessException("Invalid user");
+            return userId;
+        }
+
         public string GetUserNameFromToken()
         {
             var httpContext = _httpContextAccessor.HttpContext;
@@ -136,7 +146,7 @@ namespace MedManage.Application.Services
             if (string.IsNullOrEmpty(token))
                 throw new InvalidOperationException("Токен авторизации отсутствует.");
 
-            var handler = new JwtSecurityTokenHandler();
+            var handler = new System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler();
             var jwtToken = handler.ReadJwtToken(token);
 
             var nameClaim = jwtToken.Claims.FirstOrDefault(c => c.Type == "name");

@@ -34,18 +34,24 @@ namespace MedManage.WebAPI.Controllers
             return Ok(announcement);
         }
 
+        [HttpGet("my")]
+        public async Task<IActionResult> GetMyAnnouncements()
+        {
+            var announcements = await _announcementService.GetMyAnnouncementsAsync();
+            return Ok(announcements);
+        }
+
         [HttpGet("paginated")]
         public async Task<IActionResult> GetAllAnnouncementsPaginatedAsync(
             int pageNumber, 
             int pageSize, 
-            TypeOfSort sortBy, 
-            string searchFilter, 
-            ProductType productType,
-            InventoryStatus statusInventory,
-            int views)
+            TypeOfSort sortBy = TypeOfSort.ByDate, 
+            string? searchFilter = null, 
+            ProductType productType = ProductType.All,
+            InventoryStatus statusInventory = InventoryStatus.All)
         {
             var announcements = await _announcementService.GetAllAnnouncementsPaginatedAsync(
-                pageNumber, pageSize, sortBy, searchFilter, productType, statusInventory, views);
+                pageNumber, pageSize, sortBy, searchFilter ?? string.Empty, productType, statusInventory);
             return Ok(announcements);
         }
 
@@ -57,9 +63,9 @@ namespace MedManage.WebAPI.Controllers
         }
 
         [HttpPatch("{announcementId}")]
-        public async Task<IActionResult> ChangeAnnouncementContentAsync(Guid announcementId, [FromBody] string content)
+        public async Task<IActionResult> ChangeAnnouncementContentAsync(Guid announcementId, [FromBody] UpdateAnnouncementContentRequest request)
         {
-            await _announcementService.ChangeAnnouncementContentAsync(announcementId, content);
+            await _announcementService.ChangeAnnouncementContentAsync(announcementId, request.Content);
             return NoContent();
         }
 

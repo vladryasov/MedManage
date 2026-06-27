@@ -1,4 +1,4 @@
-import { Layout, Menu, Button, Dropdown, theme } from 'antd';
+import { Layout, Menu, Button, Dropdown, theme, Badge } from 'antd';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import {
   FileTextOutlined,
@@ -6,6 +6,7 @@ import {
   LogoutOutlined,
   TeamOutlined,
   BankOutlined,
+  BellOutlined,
   MenuFoldOutlined,
   MenuUnfoldOutlined,
   SunOutlined,
@@ -14,6 +15,9 @@ import {
 import { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
+import { useUnreadCount, useNotifications } from '../hooks/useNotifications';
+import { useMarkAsRead } from '../hooks/useNotifications';
+import { InAppNotificationType, type InAppNotificationDTO } from '../types';
 import styles from './AppLayout.module.css';
 
 const { Header, Sider, Content } = Layout;
@@ -25,6 +29,9 @@ export default function AppLayout() {
   const { isDarkMode, toggleTheme } = useTheme();
   const { token } = theme.useToken();
   const [collapsed, setCollapsed] = useState(false);
+  const { data: unreadCount } = useUnreadCount();
+  const { data: notifications } = useNotifications();
+  const markAsReadMutation = useMarkAsRead();
 
   const menuItems = [
     {
@@ -59,6 +66,12 @@ export default function AppLayout() {
         onClick: () => navigate('/profile'),
       },
       {
+        key: 'notifications',
+        icon: <BellOutlined />,
+        label: 'Уведомления',
+        onClick: () => navigate('/notifications'),
+      },
+      {
         key: 'logout',
         icon: <LogoutOutlined />,
         label: 'Выйти',
@@ -66,6 +79,44 @@ export default function AppLayout() {
       },
     ],
   };
+
+  const getNotificationTab = (n: InAppNotificationDTO) => {
+    if (n.type === InAppNotificationType.PurchaseRequest) return 'incoming';
+    return 'history';
+  };
+
+  const notificationDropdownItems = (notifications ?? []).slice(0, 5).map((n) => ({
+    key: n.id,
+    label: (
+      <div
+        style={{
+          maxWidth: 300,
+          cursor: 'pointer',
+          color: n.isRead ? token.colorTextTertiary : token.colorText,
+        }}
+        onClick={() => {
+          if (!n.isRead) {
+            markAsReadMutation.mutate(n.id);
+          }
+          navigate(`/profile?tab=${getNotificationTab(n)}`);
+        }}
+      >
+        <div style={{ fontWeight: n.isRead ? 'normal' : 'bold', fontSize: 13 }}>{n.title}</div>
+        <div style={{ fontSize: 12, color: token.colorTextSecondary }}>{n.message}</div>
+      </div>
+    ),
+  }));
+
+  if (notifications && notifications.length > 5) {
+    notificationDropdownItems.push({
+      key: 'all',
+      label: (
+        <div style={{ textAlign: 'center' }} onClick={() => navigate('/notifications')}>
+          Все уведомления
+        </div>
+      ),
+    });
+  }
 
   return (
     <Layout className={styles.layout}>
@@ -116,9 +167,14 @@ export default function AppLayout() {
               icon={isDarkMode ? <SunOutlined /> : <MoonOutlined />}
               onClick={toggleTheme}
             />
+            <Dropdown menu={{ items: notificationDropdownItems }} trigger={['click']}>
+              <Badge count={unreadCount ?? 0} size="small">
+                <Button type="text" icon={<BellOutlined />} />
+              </Badge>
+            </Dropdown>
             <Dropdown menu={userMenu}>
               <Button type="text" icon={<UserOutlined />}>
-                {user?.userName ?? 'Пользователь'}
+                {user?.fullName ?? user?.userName ?? 'Пользователь'}
               </Button>
             </Dropdown>
           </div>

@@ -96,6 +96,7 @@
     <ItemGroup>
       <ProjectReference Include="..\MedManage.Core\MedManage.Application\MedManage.Application.csproj" />
       <ProjectReference Include="..\MedManage.Indentity\MedManage.Indentity.csproj" />
+      <ProjectReference Include="..\MedManage.Persistence\MedManage.Persistence.csproj" />
     </ItemGroup>
 
 </Project>

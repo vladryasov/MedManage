@@ -3,6 +3,7 @@ import {
   getAllAnnouncements,
   getAnnouncementById,
   getPaginatedAnnouncements,
+  getMyAnnouncements,
   createAnnouncement,
   updateAnnouncementContent,
   deleteAnnouncement,
@@ -26,10 +27,18 @@ export function useAnnouncement(id: string) {
   });
 }
 
+export function useMyAnnouncements() {
+  return useQuery({
+    queryKey: ['announcements', 'my'],
+    queryFn: getMyAnnouncements,
+  });
+}
+
 export function usePaginatedAnnouncements(params: PaginatedQueryParams) {
   return useQuery({
     queryKey: ['announcements', 'paginated', params],
     queryFn: () => getPaginatedAnnouncements(params),
+    staleTime: 10_000,
   });
 }
 

@@ -24,7 +24,7 @@ export default function LoginPage() {
 
     try {
       const response = await login(userName.trim(), password);
-      loginUser(response.accessToken, response.refreshToken, response.user);
+      loginUser(response.user);
       navigate('/');
     } catch (err: unknown) {
       const apiError = err as { response?: { data?: { error?: string } } };

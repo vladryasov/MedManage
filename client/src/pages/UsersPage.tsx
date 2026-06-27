@@ -1,8 +1,8 @@
 import { useState, useRef, useEffect } from 'react';
-import { Card, Table, Tag, Select, message, Typography, Pagination, Space, Button, Input, Modal, Form } from 'antd';
-import { EditOutlined, CheckOutlined, CloseOutlined, PlusOutlined } from '@ant-design/icons';
+import { Card, Table, Tag, Select, message, Typography, Pagination, Space, Button, Input, Modal, Form, Popconfirm } from 'antd';
+import { EditOutlined, CheckOutlined, CloseOutlined, PlusOutlined, DeleteOutlined, SearchOutlined } from '@ant-design/icons';
 import { useAuth } from '../contexts/AuthContext';
-import { useUsers, useUpdateUserRole, useUpdateUserPhone, useCreateUser } from '../hooks/useUsers';
+import { useUsers, useUpdateUserRole, useUpdateUserPhone, useCreateUser, useDeleteUser } from '../hooks/useUsers';
 import { useOrganizations } from '../hooks/useOrganizations';
 import { UserRole, userRoleLabels, type UserDTO, type CreateUserRequest } from '../types';
 
@@ -40,8 +40,25 @@ export default function UsersPage() {
   const updateRoleMutation = useUpdateUserRole();
   const updatePhoneMutation = useUpdateUserPhone();
   const createUserMutation = useCreateUser();
+  const deleteUserMutation = useDeleteUser();
   const { user: currentUser } = useAuth();
   const isAdmin = (currentUser?.role ?? 0) >= UserRole.Admin;
+
+  const [search, setSearch] = useState('');
+
+  const filteredUsers = (users ?? []).filter((u) =>
+    u.userName.toLowerCase().includes(search.toLowerCase()) ||
+    u.fullName.toLowerCase().includes(search.toLowerCase()),
+  );
+
+  const paginatedData = filteredUsers.slice(
+    (current - 1) * pageSize,
+    current * pageSize,
+  );
+
+  useEffect(() => {
+    setCurrent(1);
+  }, [filteredUsers.length]);
 
   const [editingPhoneId, setEditingPhoneId] = useState<string | null>(null);
   const [editingPhoneValue, setEditingPhoneValue] = useState('');
@@ -54,6 +71,16 @@ export default function UsersPage() {
       setEditingPhoneId(null);
     } catch {
       message.error('Ошибка при обновлении номера');
+    }
+  };
+
+  const handleDeleteUser = async (userId: string) => {
+    try {
+      await deleteUserMutation.mutateAsync(userId);
+      message.success('Пользователь удалён');
+    } catch (err: unknown) {
+      const apiError = err as { response?: { data?: { error?: string } } };
+      message.error(apiError?.response?.data?.error || 'Ошибка при удалении пользователя');
     }
   };
 
@@ -70,15 +97,6 @@ export default function UsersPage() {
       message.error(apiError?.response?.data?.error || 'Ошибка при создании пользователя');
     }
   };
-
-  const paginatedData = (users ?? []).slice(
-    (current - 1) * pageSize,
-    current * pageSize,
-  );
-
-  useEffect(() => {
-    setCurrent(1);
-  }, [users?.length]);
 
   const handleRoleChange = (userId: string, newRole: UserRole) => {
     const user = users?.find((u) => u.userId === userId);
@@ -99,6 +117,7 @@ export default function UsersPage() {
       render: (role: UserRole, record: UserDTO) =>
         isAdmin ? (
           <Select
+            size="small"
             value={role}
             onChange={(val: UserRole) => handleRoleChange(record.userId, val)}
             style={{ width: 160 }}
@@ -177,6 +196,22 @@ export default function UsersPage() {
       key: 'createdAt',
       render: (val: string) => new Date(val).toLocaleDateString(),
     },
+    {
+      title: 'Действия',
+      key: 'actions',
+      render: (_: unknown, record: UserDTO) =>
+        isAdmin && record.userId !== currentUser?.userId ? (
+          <Popconfirm
+            title="Удалить пользователя?"
+            description="Все связанные данные будут удалены."
+            onConfirm={() => handleDeleteUser(record.userId)}
+            okText="Удалить"
+            cancelText="Отмена"
+          >
+            <DeleteOutlined style={{ cursor: 'pointer', color: '#ff4d4f' }} />
+          </Popconfirm>
+        ) : null,
+    },
   ];
 
   return (
@@ -185,13 +220,23 @@ export default function UsersPage() {
         style={{ height: 'calc(100vh - 104px)' }}
         styles={{ body: { height: '100%', display: 'flex', flexDirection: 'column', padding: 24 } }}
       >
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 8 }}>
           <Title level={4} style={{ margin: 0 }}>Пользователи</Title>
-          {isAdmin && (
-            <Button type="primary" icon={<PlusOutlined />} onClick={() => setCreateOpen(true)}>
-              Создать пользователя
-            </Button>
-          )}
+          <Space>
+            <Input
+              placeholder="Поиск по имени..."
+              prefix={<SearchOutlined />}
+              value={search}
+              onChange={(e) => { setSearch(e.target.value); setCurrent(1); }}
+              style={{ width: 240 }}
+              allowClear
+            />
+            {isAdmin && (
+              <Button type="primary" icon={<PlusOutlined />} onClick={() => setCreateOpen(true)}>
+                Создать пользователя
+              </Button>
+            )}
+          </Space>
         </div>
 
         <div
@@ -212,7 +257,7 @@ export default function UsersPage() {
           <Pagination
             current={current}
             pageSize={pageSize}
-            total={users?.length ?? 0}
+            total={filteredUsers.length}
             showSizeChanger
             pageSizeOptions={['10', '20', '50', '100']}
             showTotal={(total, range) => `${range[0]}-${range[1]} из ${total}`}

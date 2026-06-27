@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Card, Table, Button, Modal, Form, Input, message, Typography, Space, Popconfirm, Pagination } from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
+import { PlusOutlined, EditOutlined, DeleteOutlined, SearchOutlined } from '@ant-design/icons';
 import { useAuth } from '../contexts/AuthContext';
 import { useOrganizations, useCreateOrganization, useUpdateOrganization, useDeleteOrganization } from '../hooks/useOrganizations';
 import { UserRole, type OrganizationDTO } from '../types';
@@ -16,16 +16,39 @@ export default function OrganizationsPage() {
   const updateMutation = useUpdateOrganization();
   const deleteMutation = useDeleteOrganization();
 
+  const tableWrapperRef = useRef<HTMLDivElement>(null);
+  const [scrollY, setScrollY] = useState(400);
+
+  useEffect(() => {
+    const updateScrollY = () => {
+      if (tableWrapperRef.current) {
+        setScrollY(Math.max(200, tableWrapperRef.current.clientHeight - 46));
+      }
+    };
+    updateScrollY();
+    window.addEventListener('resize', updateScrollY);
+    return () => window.removeEventListener('resize', updateScrollY);
+  }, []);
+
+  const [search, setSearch] = useState('');
   const [current, setCurrent] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [modalOpen, setModalOpen] = useState(false);
   const [editingOrg, setEditingOrg] = useState<OrganizationDTO | null>(null);
   const [form] = Form.useForm();
 
-  const paginatedData = (organizations ?? []).slice(
+  const filteredOrgs = (organizations ?? []).filter((o) =>
+    o.name.toLowerCase().includes(search.toLowerCase()),
+  );
+
+  const paginatedData = filteredOrgs.slice(
     (current - 1) * pageSize,
     current * pageSize,
   );
+
+  useEffect(() => {
+    setCurrent(1);
+  }, [filteredOrgs.length]);
 
   const openCreate = () => {
     setEditingOrg(null);
@@ -82,16 +105,19 @@ export default function OrganizationsPage() {
       title: 'Действия',
       key: 'actions',
       render: (_: unknown, record: OrganizationDTO) => (
-        <Space>
-          <Button size="small" icon={<EditOutlined />} onClick={() => openEdit(record)} />
+        <span style={{ whiteSpace: 'nowrap' }}>
+          <EditOutlined
+            style={{ cursor: 'pointer', marginRight: 12 }}
+            onClick={() => openEdit(record)}
+          />
           <Popconfirm
             title="Удалить организацию?"
             description="Пользователи организации останутся в системе"
             onConfirm={() => handleDelete(record.organizationId)}
           >
-            <Button size="small" danger icon={<DeleteOutlined />} />
+            <DeleteOutlined style={{ cursor: 'pointer', color: '#ff4d4f' }} />
           </Popconfirm>
-        </Space>
+        </span>
       ),
     }] : []),
   ];
@@ -102,23 +128,36 @@ export default function OrganizationsPage() {
         style={{ height: 'calc(100vh - 104px)' }}
         styles={{ body: { height: '100%', display: 'flex', flexDirection: 'column', padding: 24 } }}
       >
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 8 }}>
           <Title level={4} style={{ margin: 0 }}>Организации</Title>
-          {isAdmin && (
-            <Button type="primary" icon={<PlusOutlined />} onClick={openCreate}>
-              Создать организацию
-            </Button>
-          )}
+          <Space>
+            <Input
+              placeholder="Поиск по названию..."
+              prefix={<SearchOutlined />}
+              value={search}
+              onChange={(e) => { setSearch(e.target.value); setCurrent(1); }}
+              style={{ width: 240 }}
+              allowClear
+            />
+            {isAdmin && (
+              <Button type="primary" icon={<PlusOutlined />} onClick={openCreate}>
+                Создать организацию
+              </Button>
+            )}
+          </Space>
         </div>
 
-        <div style={{ flex: 1, minHeight: 0, overflow: 'hidden' }}>
+        <div
+          ref={tableWrapperRef}
+          style={{ flex: 1, minHeight: 0, overflow: 'hidden' }}
+        >
           <Table
             dataSource={paginatedData}
             columns={columns}
             rowKey="organizationId"
             loading={isLoading}
             pagination={false}
-            scroll={{ y: 'calc(100vh - 280px)' }}
+            scroll={{ y: scrollY }}
           />
         </div>
 
@@ -126,7 +165,7 @@ export default function OrganizationsPage() {
           <Pagination
             current={current}
             pageSize={pageSize}
-            total={organizations?.length ?? 0}
+            total={filteredOrgs.length}
             showSizeChanger
             pageSizeOptions={['10', '20', '50', '100']}
             showTotal={(total, range) => `${range[0]}-${range[1]} из ${total}`}

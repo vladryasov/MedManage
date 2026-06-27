@@ -28,4 +28,6 @@ public interface IUserRepository
         Guid? organizationId = null);
 
     Task UpdateAsync(User user);
+
+    Task DeleteAsync(User user);
 }

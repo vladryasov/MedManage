@@ -17,6 +17,8 @@ public static class ServiceCollectionExtensions
         services.AddHttpClient<IEmailSender, MailKitEmailSender>();
         services.AddScoped<IOutboxService, OutboxService>();
         services.AddScoped<IOrganizationService, OrganizationService>();
+        services.AddScoped<IPurchaseRequestService, PurchaseRequestService>();
+        services.AddScoped<IInAppNotificationService, InAppNotificationService>();
 
         services.AddAutoMapper(cfg =>
         {
@@ -25,6 +27,8 @@ public static class ServiceCollectionExtensions
             cfg.AddProfile<InventoryMappingProfile>();
             cfg.AddProfile<OrganizationMappingProfile>();
             cfg.AddProfile<AnnouncementMappingProfile>();
+            cfg.AddProfile<PurchaseRequestMappingProfile>();
+            cfg.AddProfile<InAppNotificationMappingProfile>();
         });
     }
 }

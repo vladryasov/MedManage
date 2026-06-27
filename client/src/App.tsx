@@ -13,6 +13,7 @@ import CreateAnnouncementPage from './pages/CreateAnnouncementPage';
 import UsersPage from './pages/UsersPage';
 import OrganizationsPage from './pages/OrganizationsPage';
 import ProfilePage from './pages/ProfilePage';
+import NotificationsPage from './pages/NotificationsPage';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -42,6 +43,7 @@ function AppRoutes() {
         <Route path="users" element={<UsersPage />} />
         <Route path="organizations" element={<OrganizationsPage />} />
         <Route path="profile" element={<ProfilePage />} />
+        <Route path="notifications" element={<NotificationsPage />} />
       </Route>
     </Routes>
   );

@@ -3,7 +3,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { Spin } from 'antd';
 
 export default function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { token, loading } = useAuth();
+  const { user, loading } = useAuth();
 
   if (loading) {
     return (
@@ -13,7 +13,7 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
     );
   }
 
-  if (!token) {
+  if (!user) {
     return <Navigate to="/login" replace />;
   }
 

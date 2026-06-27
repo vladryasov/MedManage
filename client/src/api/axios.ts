@@ -1,39 +1,27 @@
 import axios from 'axios';
 
-const STORAGE_KEYS = {
-  TOKEN: 'jwt_token',
-  REFRESH: 'jwt_refresh',
-};
-
 const apiClient = axios.create({
   baseURL: '/api',
   headers: { 'Content-Type': 'application/json' },
+  withCredentials: true,
 });
 
 let isRefreshing = false;
 let pendingQueue: Array<{
-  resolve: (token: string) => void;
+  resolve: () => void;
   reject: (err: unknown) => void;
 }> = [];
 
-function processQueue(error: unknown, token: string | null) {
+function processQueue(error: unknown) {
   pendingQueue.forEach((p) => {
-    if (error || !token) {
+    if (error) {
       p.reject(error);
     } else {
-      p.resolve(token);
+      p.resolve();
     }
   });
   pendingQueue = [];
 }
-
-apiClient.interceptors.request.use((config) => {
-  const token = localStorage.getItem(STORAGE_KEYS.TOKEN);
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
 
 apiClient.interceptors.response.use(
   (response) => response,
@@ -47,38 +35,19 @@ apiClient.interceptors.response.use(
       return new Promise((resolve, reject) => {
         pendingQueue.push({ resolve, reject });
       })
-        .then((token) => {
-          originalRequest.headers.Authorization = `Bearer ${token}`;
-          return apiClient(originalRequest);
-        })
+        .then(() => apiClient(originalRequest))
         .catch((err) => Promise.reject(err));
     }
 
     originalRequest._retry = true;
     isRefreshing = true;
 
-    const refreshToken = localStorage.getItem(STORAGE_KEYS.REFRESH);
-    if (!refreshToken) {
-      isRefreshing = false;
-      window.dispatchEvent(new CustomEvent('auth:unauthorized'));
-      return Promise.reject(error);
-    }
-
     try {
-      const { data } = await axios.post('/api/Auth/refresh', { refreshToken });
-      const { accessToken, refreshToken: newRefresh } = data;
-
-      localStorage.setItem(STORAGE_KEYS.TOKEN, accessToken);
-      localStorage.setItem(STORAGE_KEYS.REFRESH, newRefresh);
-
-      processQueue(null, accessToken);
-
-      originalRequest.headers.Authorization = `Bearer ${accessToken}`;
+      await axios.post('/api/Auth/refresh', {}, { withCredentials: true });
+      processQueue(null);
       return apiClient(originalRequest);
     } catch (refreshError) {
-      processQueue(refreshError, null);
-      localStorage.removeItem(STORAGE_KEYS.TOKEN);
-      localStorage.removeItem(STORAGE_KEYS.REFRESH);
+      processQueue(refreshError);
       window.dispatchEvent(new CustomEvent('auth:unauthorized'));
       return Promise.reject(refreshError);
     } finally {
@@ -87,5 +56,4 @@ apiClient.interceptors.response.use(
   },
 );
 
-export { STORAGE_KEYS };
 export default apiClient;

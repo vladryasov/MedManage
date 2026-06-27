@@ -8,8 +8,9 @@ public interface IUserService
     Task<UserDTO> CreateUserAsync(CreateUserRequest request);
     Task<IEnumerable<UserDTO>> GetAllUsersExceptAsync();
     Task UpdateUserInfoAsync(UserDTO updatedUser);
-    Task UpdateUserRoleAsync(UserDTO updatedUser, UserRole newRole);
-    Task UpdateUserPhoneNumberAsync(UserDTO updatedUser);
+    Task UpdateUserRoleAsync(Guid userId, UserRole newRole);
+    Task UpdateUserPhoneNumberAsync(Guid userId, string phoneNumber);
+    Task DeleteUserAsync(Guid userId);
     Task<UserDTO> GetCurrentUserAsync();
     string GetUserNameFromToken();
 }

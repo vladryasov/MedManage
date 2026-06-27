@@ -35,6 +35,10 @@ export async function updateUserPhone(
   await apiClient.patch(`/User/users/${user.userId}/updateNumber`, user);
 }
 
+export async function deleteUser(userId: string): Promise<void> {
+  await apiClient.delete(`/User/${userId}`);
+}
+
 export async function createUser(request: CreateUserRequest): Promise<UserDTO> {
   const { data } = await apiClient.post('/User/create', request);
   return data;

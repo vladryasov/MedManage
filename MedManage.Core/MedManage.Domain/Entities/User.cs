@@ -107,4 +107,6 @@ public class User
     /// Объявления, созданные пользователем.
     /// </summary>
     public ICollection<Announcement> Announcements { get; private set; } = new List<Announcement>();
+    public ICollection<PurchaseRequest> PurchaseRequestsAsBuyer { get; private set; } = new List<PurchaseRequest>();
+    public ICollection<PurchaseRequest> PurchaseRequestsAsSeller { get; private set; } = new List<PurchaseRequest>();
 }

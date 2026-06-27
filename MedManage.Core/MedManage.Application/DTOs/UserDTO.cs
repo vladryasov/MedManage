@@ -12,6 +12,7 @@ public class UserDTO
     public UserRole Role { get; set; }
     public DateTime CreatedAt { get; set; }
     public string PhoneNumber { get; set; } = null!;
+    public Guid? OrganizationId { get; set; }
 }
 
 /// <summary>

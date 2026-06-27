@@ -1,3 +1,4 @@
+using MedManage.Domain.Common;
 using MedManage.Domain.Entities;
 using MedManage.Domain.Enums;
 using MedManage.Domain.Interfaces;
@@ -8,9 +9,6 @@ using Microsoft.EntityFrameworkCore;
 
 namespace MedManage.Persistence.Repositories;
 
-/// <summary>
-/// Репозиторий для работы с сущностью объявлений.
-/// </summary>
 public class AnnouncementRepository : IAnnouncementRepository
 {
     private const int RecentAnnouncementsLimit = 20;
@@ -22,36 +20,26 @@ public class AnnouncementRepository : IAnnouncementRepository
         _context = context;
     }
 
-    [Cache("RecentAnnouncements", ExpirationSeconds = 300)] // 5 минут
+    [Cache("RecentAnnouncements", ExpirationSeconds = 300)]
     public async Task<IEnumerable<Announcement>> GetAllAsync()
     {
         return await _context.Announcements
             .Include(a => a.User)
+            .Where(NotExpired())
             .OrderByDescending(a => a.CreatedAt)
             .Take(RecentAnnouncementsLimit)
             .ToListAsync();
     }
 
-    [Transactional]
-    [CacheInvalidate("RecentAnnouncements")]
-    public async Task<Announcement> GetByIdAsync(Guid announcementId)
+    [Cache("AnnouncementById:{announcementId}", ExpirationSeconds = 600)]
+    public async Task<Announcement?> GetByIdAsync(Guid announcementId)
     {
-        var announcement = await _context.Announcements
+        return await _context.Announcements
             .Include(a => a.User)
             .FirstOrDefaultAsync(a => a.AnnouncementId == announcementId);
-
-        if (announcement != null)
-        {
-            announcement.Views++;
-            await _context.SaveChangesAsync();
-        }
-
-        return announcement;
     }
 
-    [Transactional]
-    [CacheInvalidate("RecentAnnouncements", "ById:*")] // сбрасываем список и все кешированные объявления
-    public IQueryable<Announcement> GetPaginated(
+    public async Task<PaginatedResult<Announcement>> GetPaginatedAsync(
         int pageNumber,
         int pageSize,
         TypeOfSort sortBy,
@@ -59,47 +47,44 @@ public class AnnouncementRepository : IAnnouncementRepository
         ProductType productType,
         InventoryStatus inventoryStatus)
     {
-        var announcements = _context.Announcements
+        var query = _context.Announcements
             .Include(a => a.User)
+            .Where(NotExpired())
             .AsQueryable();
 
         if (productType != ProductType.All)
-            announcements = announcements.Where(a => a.TypeProduct == productType);
+            query = query.Where(a => a.TypeProduct == productType);
 
         if (inventoryStatus != InventoryStatus.All)
-            announcements = announcements.Where(a => a.StatusInventory == inventoryStatus);
+            query = query.Where(a => a.StatusInventory == inventoryStatus);
 
         if (!string.IsNullOrWhiteSpace(searchFilter))
-            announcements = announcements.Where(a =>
+            query = query.Where(a =>
                 a.Title.Contains(searchFilter) || a.Content.Contains(searchFilter));
 
-        announcements = sortBy switch
+        query = sortBy switch
         {
-            TypeOfSort.ByCategory => announcements.OrderByDescending(a => a.StatusInventory),
-            TypeOfSort.ByDate => announcements.OrderByDescending(a => a.CreatedAt),
-            _ => announcements.OrderByDescending(a => a.CreatedAt)
+            TypeOfSort.ByCategory => query.OrderByDescending(a => a.StatusInventory),
+            TypeOfSort.ByDate => query.OrderByDescending(a => a.CreatedAt),
+            _ => query.OrderByDescending(a => a.CreatedAt)
         };
 
-        var paginatedAnnouncements = announcements
+        var totalCount = await query.CountAsync();
+
+        var items = await query
             .Skip((pageNumber - 1) * pageSize)
             .Take(pageSize)
-            .ToList();
+            .ToListAsync();
 
-        foreach (var announcement in paginatedAnnouncements)
+        return new PaginatedResult<Announcement>
         {
-            announcement.Views++;
-            _context.Announcements.Update(announcement);
-        }
-
-        _context.SaveChanges();
-
-        return announcements
-            .Skip((pageNumber - 1) * pageSize)
-            .Take(pageSize);
+            Items = items,
+            TotalCount = totalCount
+        };
     }
 
     [Transactional]
-    [CacheInvalidate("RecentAnnouncements", "ById:*")]
+    [CacheInvalidate("RecentAnnouncements", "AnnouncementById:*")]
     public async Task<Announcement> CreateAsync(
         string title,
         string content,
@@ -128,8 +113,16 @@ public class AnnouncementRepository : IAnnouncementRepository
         return announcementWithUser;
     }
 
+    public async Task IncrementViewsAsync(Guid announcementId)
+    {
+        await _context.Announcements
+            .Where(a => a.AnnouncementId == announcementId)
+            .ExecuteUpdateAsync(setters => setters
+                .SetProperty(a => a.Views, a => a.Views + 1));
+    }
+
     [Transactional]
-    [CacheInvalidate("RecentAnnouncements", "ById:*")]
+    [CacheInvalidate("RecentAnnouncements", "AnnouncementById:*")]
     public async Task UpdateAsync(Announcement announcement)
     {
         _context.Announcements.Update(announcement);
@@ -137,7 +130,7 @@ public class AnnouncementRepository : IAnnouncementRepository
     }
 
     [Transactional]
-    [CacheInvalidate("RecentAnnouncements", "ById:*")]
+    [CacheInvalidate("RecentAnnouncements", "AnnouncementById:*")]
     public async Task DeleteAsync(Announcement announcement)
     {
         _context.Announcements.Remove(announcement);
@@ -148,6 +141,7 @@ public class AnnouncementRepository : IAnnouncementRepository
     {
         return await _context.Announcements
             .Include(a => a.User)
+            .Where(NotExpired())
             .Where(a => a.User.FullName.Contains(authorName))
             .OrderByDescending(a => a.CreatedAt)
             .ToListAsync();
@@ -156,6 +150,7 @@ public class AnnouncementRepository : IAnnouncementRepository
     public async Task<IEnumerable<Announcement>> GetAnnouncementsByDateAsync(DateTime date)
     {
         return await _context.Announcements
+            .Where(NotExpired())
             .Where(a => a.CreatedAt.Date == date.Date)
             .OrderByDescending(a => a.CreatedAt)
             .ToListAsync();
@@ -164,7 +159,22 @@ public class AnnouncementRepository : IAnnouncementRepository
     public async Task<IEnumerable<Announcement>> SearchAnnouncementsByContentAsync(string content)
     {
         return await _context.Announcements
+            .Where(NotExpired())
             .Where(a => a.Content.Contains(content))
             .ToListAsync();
+    }
+
+    public async Task<IEnumerable<Announcement>> GetByUserIdAsync(Guid userId)
+    {
+        return await _context.Announcements
+            .Include(a => a.User)
+            .Where(a => a.CreatedByUserId == userId)
+            .OrderByDescending(a => a.CreatedAt)
+            .ToListAsync();
+    }
+
+    private static System.Linq.Expressions.Expression<Func<Announcement, bool>> NotExpired()
+    {
+        return a => a.ExpirationDate == null || a.ExpirationDate > DateTimeOffset.UtcNow;
     }
 }

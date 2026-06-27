@@ -43,7 +43,7 @@ public class OrganizationRepository : IOrganizationRepository
     }
 
     [Transactional]
-    [CacheInvalidate("AllOrganizations", "OrganizationById:{organization.OrganizationId}")]
+    [CacheInvalidate("AllOrganizations", "OrganizationById:*")]
     public async Task UpdateAsync(Organization organization)
     {
         _context.Organizations.Update(organization);
@@ -51,7 +51,7 @@ public class OrganizationRepository : IOrganizationRepository
     }
 
     [Transactional]
-    [CacheInvalidate("AllOrganizations", "OrganizationById:{id}")]
+    [CacheInvalidate("AllOrganizations", "OrganizationById:*")]
     public async Task DeleteAsync(Organization organization)
     {
         _context.Organizations.Remove(organization);
