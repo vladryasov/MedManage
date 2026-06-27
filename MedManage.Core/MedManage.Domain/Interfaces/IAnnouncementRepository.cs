@@ -1,18 +1,16 @@
+using MedManage.Domain.Common;
 using MedManage.Domain.Entities;
 using MedManage.Domain.Enums;
 
 namespace MedManage.Domain.Interfaces;
 
-/// <summary>
-/// Интерфейс репозитория для работы с объявлениями.
-/// </summary>
 public interface IAnnouncementRepository
 {
     Task<IEnumerable<Announcement>> GetAllAsync();
 
-    Task<Announcement> GetByIdAsync(Guid announcementId);
+    Task<Announcement?> GetByIdAsync(Guid announcementId);
 
-    IQueryable<Announcement> GetPaginated(
+    Task<PaginatedResult<Announcement>> GetPaginatedAsync(
         int pageNumber,
         int pageSize,
         TypeOfSort sortBy,
@@ -28,6 +26,8 @@ public interface IAnnouncementRepository
         ProductType typeProduct,
         Guid? organizationId = null,
         DateTimeOffset? expirationDate = null);
+
+    Task IncrementViewsAsync(Guid announcementId);
 
     Task UpdateAsync(Announcement announcement);
 

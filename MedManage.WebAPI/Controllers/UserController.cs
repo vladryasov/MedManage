@@ -48,17 +48,35 @@ namespace MedManage.WebAPI.Controllers
             return Ok(new { userName });
         }
 
-        [HttpPatch("users/{userId}/Role")]
-        public async Task<IActionResult> UpdateUserRole([FromBody] UserDTO updatedUser, UserRole newRole)
+        [HttpPatch("{userId}/role")]
+        public async Task<IActionResult> UpdateUserRole(Guid userId, UserRole newRole)
         {
-            await _userService.UpdateUserRoleAsync(updatedUser, newRole);
+            await _userService.UpdateUserRoleAsync(userId, newRole);
             return Ok("роль обновлена успешно");
         }
 
-        [HttpPatch("users/{userId}/updateNumber")]
-        public async Task<IActionResult> UpdateUserPhoneNumber([FromBody] UserDTO updatedUser)
+        [HttpDelete("{userId}")]
+        public async Task<IActionResult> DeleteUser(Guid userId)
         {
-            await _userService.UpdateUserPhoneNumberAsync(updatedUser);
+            try
+            {
+                await _userService.DeleteUserAsync(userId);
+                return NoContent();
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return Forbid();
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { error = ex.Message });
+            }
+        }
+
+        [HttpPatch("{userId}/phone")]
+        public async Task<IActionResult> UpdateUserPhoneNumber(Guid userId, [FromBody] string phoneNumber)
+        {
+            await _userService.UpdateUserPhoneNumberAsync(userId, phoneNumber);
             return Ok("Номер обновлен");
         }
 

@@ -39,7 +39,7 @@ public class NotificationOutboxConfiguration : IEntityTypeConfiguration<Notifica
         builder.HasOne(n => n.RecipientUser)
             .WithMany()
             .HasForeignKey(n => n.RecipientUserId)
-            .OnDelete(DeleteBehavior.SetNull);
+            .OnDelete(DeleteBehavior.Cascade);
 
         builder.HasIndex(n => n.Status);
         builder.HasIndex(n => n.CreatedAt);

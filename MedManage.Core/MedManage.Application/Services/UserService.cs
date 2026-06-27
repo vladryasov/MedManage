@@ -75,7 +75,7 @@ namespace MedManage.Application.Services
             await _outboxService.AddToOutboxAsync(
                 request.Email,
                 "Добро пожаловать в MedManage",
-                $"Ваш аккаунт создан.\n\nЛогин: {userName}\nПароль: {password}\n\nПриятного пользования!.",
+                $"Ваш аккаунт создан.\n\nЛогин: {userName}\nПароль: {password}\n\nПриятного пользования!",
                 NotificationType.UserCredentials,
                 user.UserId);
 
@@ -111,10 +111,8 @@ namespace MedManage.Application.Services
             return _mapper.Map<UserDTO>(user);
         }
 
-        public async Task UpdateUserRoleAsync(UserDTO updatedUser, UserRole newRole)
+        public async Task UpdateUserRoleAsync(Guid userId, UserRole newRole)
         {
-            if (updatedUser == null) throw new ArgumentNullException(nameof(updatedUser));
-
             var currentUserId = GetCurrentUserId();
             var currentUser = await _userRepository.GetByIdAsync(currentUserId);
             if (currentUser.Role < UserRole.Admin)
@@ -122,27 +120,44 @@ namespace MedManage.Application.Services
             if (newRole > currentUser.Role)
                 throw new UnauthorizedAccessException("Нельзя назначить роль выше своей");
 
-            var existingUser = await _userRepository.GetByIdAsync(updatedUser.UserId);
+            var existingUser = await _userRepository.GetByIdAsync(userId);
+            if (existingUser == null)
+                throw new InvalidOperationException("Пользователь не найден.");
             existingUser.Role = newRole;
             await _userRepository.UpdateAsync(existingUser);
         }
 
-        public async Task UpdateUserPhoneNumberAsync(UserDTO updatedUser)
+        public async Task UpdateUserPhoneNumberAsync(Guid userId, string phoneNumber)
         {
-            if (updatedUser == null) throw new ArgumentNullException(nameof(updatedUser));
-
             var currentUserId = GetCurrentUserId();
-            if (updatedUser.UserId != currentUserId)
+            if (userId != currentUserId)
             {
                 var currentUser = await _userRepository.GetByIdAsync(currentUserId);
                 if (currentUser.Role < UserRole.Admin)
                     throw new UnauthorizedAccessException("Недостаточно прав для изменения номера");
             }
 
-            var existingUser = await _userRepository.GetByIdAsync(updatedUser.UserId);
-            if (existingUser == null) throw new InvalidOperationException($"{updatedUser.UserId} - такого пользователя нет.");
-            existingUser.PhoneNumber = updatedUser.PhoneNumber;
+            var existingUser = await _userRepository.GetByIdAsync(userId);
+            if (existingUser == null) throw new InvalidOperationException($"{userId} - такого пользователя нет.");
+            existingUser.PhoneNumber = phoneNumber;
             await _userRepository.UpdateAsync(existingUser);
+        }
+
+        public async Task DeleteUserAsync(Guid userId)
+        {
+            var currentUserId = GetCurrentUserId();
+            var currentUser = await _userRepository.GetByIdAsync(currentUserId);
+            if (currentUser.Role < UserRole.Admin)
+                throw new UnauthorizedAccessException("Недостаточно прав");
+
+            if (userId == currentUserId)
+                throw new InvalidOperationException("Нельзя удалить самого себя");
+
+            var user = await _userRepository.GetByIdAsync(userId);
+            if (user == null)
+                throw new InvalidOperationException("Пользователь не найден");
+
+            await _userRepository.DeleteAsync(user);
         }
 
         public string GetUserNameFromToken()

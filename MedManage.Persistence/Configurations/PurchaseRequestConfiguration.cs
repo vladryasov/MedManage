@@ -28,17 +28,17 @@ public class PurchaseRequestConfiguration : IEntityTypeConfiguration<PurchaseReq
         builder.HasOne(pr => pr.Announcement)
             .WithMany(a => a.PurchaseRequests)
             .HasForeignKey(pr => pr.AnnouncementId)
-            .OnDelete(DeleteBehavior.SetNull);
+            .OnDelete(DeleteBehavior.Cascade);
 
         builder.HasOne(pr => pr.BuyerUser)
             .WithMany(u => u.PurchaseRequestsAsBuyer)
             .HasForeignKey(pr => pr.BuyerUserId)
-            .OnDelete(DeleteBehavior.Restrict);
+            .OnDelete(DeleteBehavior.Cascade);
 
         builder.HasOne(pr => pr.SellerUser)
             .WithMany(u => u.PurchaseRequestsAsSeller)
             .HasForeignKey(pr => pr.SellerUserId)
-            .OnDelete(DeleteBehavior.Restrict);
+            .OnDelete(DeleteBehavior.Cascade);
 
         builder.HasIndex(pr => pr.SellerUserId);
         builder.HasIndex(pr => pr.BuyerUserId);

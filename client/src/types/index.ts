@@ -76,11 +76,15 @@ export interface CreateUserRequest {
 export interface PaginatedQueryParams {
   pageNumber: number;
   pageSize: number;
-  sortBy: number;
-  searchFilter: string;
-  productType: number;
-  statusInventory: number;
-  views: number;
+  sortBy?: number;
+  searchFilter?: string;
+  productType?: number;
+  statusInventory?: number;
+}
+
+export interface PaginatedResult<T> {
+  items: T[];
+  totalCount: number;
 }
 
 export const inventoryStatusLabels: Record<number, string> = {

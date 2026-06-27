@@ -41,7 +41,8 @@ public class AdminUserSeeder : IDataSeeder
             UserRole.Admin,
             DefaultPhoneNumber);
 
-        admin.PasswordHash = BCrypt.Net.BCrypt.HashPassword("admin123");
+        var adminPassword = _configuration["AdminSettings:Password"] ?? "admin123";
+        admin.PasswordHash = BCrypt.Net.BCrypt.HashPassword(adminPassword);
 
         await _context.Users.AddAsync(admin, cancellationToken);
         await _context.SaveChangesAsync(cancellationToken);

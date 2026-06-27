@@ -38,6 +38,7 @@ export function usePaginatedAnnouncements(params: PaginatedQueryParams) {
   return useQuery({
     queryKey: ['announcements', 'paginated', params],
     queryFn: () => getPaginatedAnnouncements(params),
+    staleTime: 10_000,
   });
 }
 

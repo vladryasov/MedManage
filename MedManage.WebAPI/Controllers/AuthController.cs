@@ -25,6 +25,7 @@ public class AuthController : ControllerBase
         try
         {
             var response = await _authService.LoginAsync(request);
+            SetAuthCookies(response.AccessToken, response.RefreshToken);
             return Ok(response);
         }
         catch (UnauthorizedAccessException ex)
@@ -34,22 +35,72 @@ public class AuthController : ControllerBase
     }
 
     [HttpPost("refresh")]
-    public async Task<IActionResult> Refresh([FromBody] RefreshRequest request)
+    public async Task<IActionResult> Refresh([FromBody] RefreshRequest? request = null)
     {
         try
         {
-            var response = await _authService.RefreshTokenAsync(request.RefreshToken);
+            var refreshToken = Request.Cookies["refresh_token"] ?? request?.RefreshToken;
+            if (string.IsNullOrEmpty(refreshToken))
+            {
+                return Unauthorized(new { error = "Недействительный токен обновления" });
+            }
+
+            var response = await _authService.RefreshTokenAsync(refreshToken);
+            SetAuthCookies(response.AccessToken, response.RefreshToken);
+
+            if (request?.RefreshToken != null && Request.Cookies["refresh_token"] == null)
+            {
+                ClearAuthCookies();
+            }
+
             return Ok(response);
         }
         catch (UnauthorizedAccessException ex)
         {
+            ClearAuthCookies();
             return Unauthorized(new { error = ex.Message });
         }
     }
 
     [HttpPost("logout")]
-    public IActionResult Logout()
+    public async Task<IActionResult> Logout([FromBody] LogoutRequest? request = null)
     {
+        var refreshToken = Request.Cookies["refresh_token"] ?? request?.RefreshToken;
+        if (!string.IsNullOrEmpty(refreshToken))
+        {
+            await _authService.RevokeRefreshTokenAsync(refreshToken);
+        }
+
+        ClearAuthCookies();
         return Ok(new { message = "Выход выполнен" });
+    }
+
+    private void SetAuthCookies(string accessToken, string refreshToken)
+    {
+        var cookieOptions = new CookieOptions
+        {
+            HttpOnly = true,
+            Secure = false,
+            SameSite = SameSiteMode.Strict,
+            Path = "/"
+        };
+
+        Response.Cookies.Append("access_token", accessToken, cookieOptions);
+
+        var refreshCookieOptions = new CookieOptions
+        {
+            HttpOnly = true,
+            Secure = false,
+            SameSite = SameSiteMode.Strict,
+            Path = "/api/Auth"
+        };
+
+        Response.Cookies.Append("refresh_token", refreshToken, refreshCookieOptions);
+    }
+
+    private void ClearAuthCookies()
+    {
+        Response.Cookies.Delete("access_token", new CookieOptions { Path = "/" });
+        Response.Cookies.Delete("refresh_token", new CookieOptions { Path = "/api/Auth" });
     }
 }

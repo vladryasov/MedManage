@@ -37,7 +37,7 @@ public class UserRepository : IUserRepository
     }
 
     [Transactional]
-    [CacheInvalidate("UserById:{user.Id}")]
+    [CacheInvalidate("UserById:*", "UserByUserName:*")]
     public async Task UpdateAsync(User user)
     {
         _context.Users.Update(user);
@@ -55,6 +55,7 @@ public class UserRepository : IUserRepository
         return await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
     }
 
+    [Cache("UserByUserName:{userName}", ExpirationSeconds = 600)]
     public async Task<User?> FindByUserNameAsync(string userName)
     {
         return await _context.Users.FirstOrDefaultAsync(u => u.UserName == userName);
@@ -76,5 +77,13 @@ public class UserRepository : IUserRepository
         await _context.SaveChangesAsync();
 
         return user;
+    }
+
+    [Transactional]
+    [CacheInvalidate("UserById:*", "UserByUserName:*")]
+    public async Task DeleteAsync(User user)
+    {
+        _context.Users.Remove(user);
+        await _context.SaveChangesAsync();
     }
 }

@@ -174,7 +174,7 @@ export default function AppLayout() {
             </Dropdown>
             <Dropdown menu={userMenu}>
               <Button type="text" icon={<UserOutlined />}>
-                {user?.userName ?? 'Пользователь'}
+                {user?.fullName ?? user?.userName ?? 'Пользователь'}
               </Button>
             </Dropdown>
           </div>

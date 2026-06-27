@@ -2,15 +2,12 @@ import { createContext, useContext, useState, useEffect, useCallback, useRef, ty
 import { useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { getCurrentUser } from '../api/users';
-import { STORAGE_KEYS } from '../api/axios';
 import type { UserDTO } from '../types';
 
 interface AuthContextType {
-  token: string | null;
   user: UserDTO | null;
   loading: boolean;
-  loginUser: (token: string, refreshToken: string, user: UserDTO) => void;
-  setTokens: (token: string, refreshToken: string) => void;
+  loginUser: (user: UserDTO) => void;
   logout: () => void;
   updateUser: (user: UserDTO) => void;
 }
@@ -20,9 +17,6 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const [token, setTokenState] = useState<string | null>(() =>
-    localStorage.getItem(STORAGE_KEYS.TOKEN),
-  );
   const [user, setUser] = useState<UserDTO | null>(null);
   const [loading, setLoading] = useState(true);
   const fetchingRef = useRef(false);
@@ -34,7 +28,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const currentUser = await getCurrentUser();
       setUser(currentUser);
     } catch {
-      clearTokens();
+      setUser(null);
     } finally {
       setLoading(false);
       fetchingRef.current = false;
@@ -42,47 +36,40 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    if (token) {
-      fetchUser();
-    } else {
-      setLoading(false);
-    }
-  }, [token, fetchUser]);
-
-  const clearTokens = () => {
-    localStorage.removeItem(STORAGE_KEYS.TOKEN);
-    localStorage.removeItem(STORAGE_KEYS.REFRESH);
-    setTokenState(null);
-    setUser(null);
-  };
+    fetchUser();
+  }, [fetchUser]);
 
   useEffect(() => {
     const handler = () => {
-      clearTokens();
+      setUser(null);
+      queryClient.clear();
       navigate('/login');
     };
     window.addEventListener('auth:unauthorized', handler);
     return () => window.removeEventListener('auth:unauthorized', handler);
-  }, [navigate]);
+  }, [navigate, queryClient]);
 
-  const loginUser = (newToken: string, newRefresh: string, newUser: UserDTO) => {
-    localStorage.setItem(STORAGE_KEYS.TOKEN, newToken);
-    localStorage.setItem(STORAGE_KEYS.REFRESH, newRefresh);
-    setTokenState(newToken);
+  const loginUser = (newUser: UserDTO) => {
     setUser(newUser);
     setLoading(false);
-    queryClient.invalidateQueries();
+    queryClient.invalidateQueries({ queryKey: ['announcements'] });
+    queryClient.invalidateQueries({ queryKey: ['users'] });
+    queryClient.invalidateQueries({ queryKey: ['notifications'] });
   };
 
-  const setTokens = (newToken: string, newRefresh: string) => {
-    localStorage.setItem(STORAGE_KEYS.TOKEN, newToken);
-    localStorage.setItem(STORAGE_KEYS.REFRESH, newRefresh);
-    setTokenState(newToken);
-  };
-
-  const logout = () => {
-    queryClient.invalidateQueries();
-    clearTokens();
+  const logout = async () => {
+    try {
+      await fetch('/api/Auth/logout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: '{}',
+      });
+    } catch {
+      // ignore
+    }
+    queryClient.clear();
+    setUser(null);
     navigate('/login');
   };
 
@@ -91,7 +78,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ token, user, loading, loginUser, setTokens, logout, updateUser }}>
+    <AuthContext.Provider value={{ user, loading, loginUser, logout, updateUser }}>
       {children}
     </AuthContext.Provider>
   );

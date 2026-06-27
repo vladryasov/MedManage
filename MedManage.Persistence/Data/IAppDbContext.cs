@@ -15,6 +15,7 @@ public interface IAppDbContext
     DbSet<NotificationOutbox> NotificationOutbox { get; }
     DbSet<PurchaseRequest> PurchaseRequests { get; }
     DbSet<InAppNotification> InAppNotifications { get; }
+    DbSet<RefreshToken> RefreshTokens { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
     int SaveChanges();

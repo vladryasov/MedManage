@@ -208,14 +208,6 @@ export default function ProfilePage() {
               </Popconfirm>
             </>
           )}
-          <Popconfirm title="Удалить запрос?" onConfirm={() => handleDelete(record.purchaseRequestId)}>
-            <Button
-              size="small"
-              danger
-              icon={<DeleteOutlined />}
-              loading={deleteMutation.isPending}
-            />
-          </Popconfirm>
         </Space>
       ),
     },

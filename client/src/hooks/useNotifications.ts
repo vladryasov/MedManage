@@ -6,6 +6,7 @@ export function useNotifications() {
     queryKey: ['notifications'],
     queryFn: getNotifications,
     refetchInterval: 30_000,
+    staleTime: 15_000,
   });
 }
 
@@ -14,6 +15,7 @@ export function useUnreadCount() {
     queryKey: ['notifications', 'unreadCount'],
     queryFn: getUnreadCount,
     refetchInterval: 30_000,
+    staleTime: 15_000,
   });
 }
 

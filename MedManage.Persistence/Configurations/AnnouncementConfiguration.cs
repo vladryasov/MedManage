@@ -39,7 +39,7 @@ public class AnnouncementConfiguration : IEntityTypeConfiguration<Announcement>
         builder.HasOne(a => a.User)
             .WithMany(u => u.Announcements)
             .HasForeignKey(a => a.CreatedByUserId)
-            .OnDelete(DeleteBehavior.Restrict);
+            .OnDelete(DeleteBehavior.Cascade);
 
         builder.HasOne(a => a.Organization)
             .WithMany(o => o.Announcements)

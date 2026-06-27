@@ -34,7 +34,12 @@ internal static class RepositoryRegistrationExtensions
             CreateProxiedRepository<IPurchaseRequestRepository, PurchaseRequestRepository>(provider,
             provider.GetRequiredService<TransactionInterceptor>()));
 
-        services.AddScoped<IInAppNotificationRepository, InAppNotificationRepository>();
+        services.AddScoped<IInAppNotificationRepository>(provider =>
+            CreateProxiedRepository<IInAppNotificationRepository, InAppNotificationRepository>(provider,
+            provider.GetRequiredService<CachingInterceptor>(),
+            provider.GetRequiredService<TransactionInterceptor>()));
+        services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
+        services.AddScoped<IOutboxRepository, OutboxRepository>();
 
         return services;
     }

@@ -1,6 +1,8 @@
 using MedManage.Domain.Entities;
 using MedManage.Domain.Interfaces;
+using MedManage.Persistence.Caching;
 using MedManage.Persistence.Data;
+using MedManage.Persistence.Transactions;
 using Microsoft.EntityFrameworkCore;
 
 namespace MedManage.Persistence.Repositories;
@@ -14,6 +16,8 @@ public class InAppNotificationRepository : IInAppNotificationRepository
         _context = context;
     }
 
+    [Transactional]
+    [CacheInvalidate("Notifications:*", "UnreadCount:*")]
     public async Task<InAppNotification> CreateAsync(InAppNotification notification)
     {
         await _context.InAppNotifications.AddAsync(notification);
@@ -27,6 +31,7 @@ public class InAppNotificationRepository : IInAppNotificationRepository
         return created;
     }
 
+    [Cache("Notifications:{recipientUserId}", ExpirationSeconds = 60)]
     public async Task<IEnumerable<InAppNotification>> GetByRecipientAsync(Guid recipientUserId)
     {
         return await _context.InAppNotifications
@@ -36,6 +41,7 @@ public class InAppNotificationRepository : IInAppNotificationRepository
             .ToListAsync();
     }
 
+    [Cache("UnreadCount:{recipientUserId}", ExpirationSeconds = 30)]
     public async Task<int> GetUnreadCountAsync(Guid recipientUserId)
     {
         return await _context.InAppNotifications
@@ -49,6 +55,8 @@ public class InAppNotificationRepository : IInAppNotificationRepository
             .FirstOrDefaultAsync(n => n.Id == notificationId);
     }
 
+    [Transactional]
+    [CacheInvalidate("Notifications:*", "UnreadCount:*")]
     public async Task MarkAsReadAsync(Guid notificationId)
     {
         var notification = await _context.InAppNotifications
@@ -60,6 +68,8 @@ public class InAppNotificationRepository : IInAppNotificationRepository
         }
     }
 
+    [Transactional]
+    [CacheInvalidate("Notifications:*", "UnreadCount:*")]
     public async Task MarkAllAsReadAsync(Guid recipientUserId)
     {
         var unread = await _context.InAppNotifications

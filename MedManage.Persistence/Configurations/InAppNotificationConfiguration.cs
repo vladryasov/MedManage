@@ -33,12 +33,12 @@ public class InAppNotificationConfiguration : IEntityTypeConfiguration<InAppNoti
         builder.HasOne(n => n.RecipientUser)
             .WithMany()
             .HasForeignKey(n => n.RecipientUserId)
-            .OnDelete(DeleteBehavior.Restrict);
+            .OnDelete(DeleteBehavior.Cascade);
 
         builder.HasOne(n => n.SenderUser)
             .WithMany()
             .HasForeignKey(n => n.SenderUserId)
-            .OnDelete(DeleteBehavior.SetNull);
+            .OnDelete(DeleteBehavior.Cascade);
 
         builder.HasIndex(n => n.RecipientUserId);
         builder.HasIndex(n => n.IsRead);

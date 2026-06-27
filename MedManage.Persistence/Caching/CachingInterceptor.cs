@@ -2,6 +2,7 @@
 {
     using System.Reflection;
     using System.Collections.Concurrent;
+    using System.Linq;
     using Castle.DynamicProxy;
     using MedManage.Persistence.Caching;
     using Microsoft.Extensions.Logging;
@@ -38,6 +39,13 @@
 
             var cacheKey = BuildKey(cacheAttr.KeyTemplate, invocation);
             var returnType = invocation.Method.ReturnType;
+
+            // Не кэшируем IQueryable — это запрос, а не данные
+            if (returnType == typeof(IQueryable) || (returnType.IsGenericType && returnType.GetGenericTypeDefinition() == typeof(IQueryable<>)))
+            {
+                invocation.Proceed();
+                return;
+            }
 
             // Для async Task<T>
             if (returnType.IsGenericType && returnType.GetGenericTypeDefinition() == typeof(Task<>))
