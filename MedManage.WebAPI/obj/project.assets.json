@@ -1039,6 +1039,7 @@
         "type": "project",
         "framework": ".NETCoreApp,Version=v10.0",
         "dependencies": {
+          "BCrypt.Net-Next": "4.2.0",
           "Microsoft.EntityFrameworkCore.Abstractions": "10.0.8",
           "Npgsql.EntityFrameworkCore.PostgreSQL": "10.0.2"
         },

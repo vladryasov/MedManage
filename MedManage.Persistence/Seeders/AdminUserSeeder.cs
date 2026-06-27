@@ -1,3 +1,4 @@
+using MedManage.Domain.Common;
 using MedManage.Domain.Entities;
 using MedManage.Domain.Enums;
 using MedManage.Persistence.Data;
@@ -42,7 +43,7 @@ public class AdminUserSeeder : IDataSeeder
             DefaultPhoneNumber);
 
         var adminPassword = _configuration["AdminSettings:Password"] ?? "admin123";
-        admin.PasswordHash = BCrypt.Net.BCrypt.HashPassword(adminPassword);
+        admin.PasswordHash = PasswordHelper.Hash(adminPassword);
 
         await _context.Users.AddAsync(admin, cancellationToken);
         await _context.SaveChangesAsync(cancellationToken);

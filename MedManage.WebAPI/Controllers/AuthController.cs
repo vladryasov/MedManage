@@ -82,7 +82,7 @@ public class AuthController : ControllerBase
             HttpOnly = true,
             Secure = false,
             SameSite = SameSiteMode.Strict,
-            Path = "/"
+            Path = "/api"
         };
 
         Response.Cookies.Append("access_token", accessToken, cookieOptions);
@@ -100,7 +100,7 @@ public class AuthController : ControllerBase
 
     private void ClearAuthCookies()
     {
-        Response.Cookies.Delete("access_token", new CookieOptions { Path = "/" });
+        Response.Cookies.Delete("access_token", new CookieOptions { Path = "/api" });
         Response.Cookies.Delete("refresh_token", new CookieOptions { Path = "/api/Auth" });
     }
 }

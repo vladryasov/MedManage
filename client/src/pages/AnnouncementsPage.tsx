@@ -21,7 +21,6 @@ import { useAuth } from '../contexts/AuthContext';
 import {
   InventoryStatus,
   ProductType,
-  TypeOfSort,
   inventoryStatusLabels,
   productTypeLabels,
   UserRole,

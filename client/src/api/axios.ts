@@ -8,7 +8,7 @@ const apiClient = axios.create({
 
 let isRefreshing = false;
 let pendingQueue: Array<{
-  resolve: () => void;
+  resolve: (value: unknown) => void;
   reject: (err: unknown) => void;
 }> = [];
 
@@ -17,7 +17,7 @@ function processQueue(error: unknown) {
     if (error) {
       p.reject(error);
     } else {
-      p.resolve();
+      p.resolve(undefined);
     }
   });
   pendingQueue = [];
