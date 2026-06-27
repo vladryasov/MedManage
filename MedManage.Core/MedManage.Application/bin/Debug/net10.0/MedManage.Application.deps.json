@@ -182,6 +182,7 @@
       },
       "MedManage.Domain/1.0.0": {
         "dependencies": {
+          "BCrypt.Net-Next": "4.2.0",
           "Microsoft.EntityFrameworkCore.Abstractions": "10.0.8",
           "Npgsql.EntityFrameworkCore.PostgreSQL": "10.0.2"
         },

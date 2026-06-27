@@ -9,7 +9,9 @@ public class Program
 {
     public static void Main(string[] args)
     {
-        DotNetEnv.Env.Load();
+        var envFile = Path.Combine(Directory.GetCurrentDirectory(), "..", ".env");
+        if (File.Exists(envFile))
+            DotNetEnv.Env.Load(envFile);
 
         var builder = WebApplication.CreateBuilder(args);
 

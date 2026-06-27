@@ -1,6 +1,5 @@
-using System.Security.Cryptography;
-using System.Text;
 using MedManage.Application.Interfaces;
+using MedManage.Domain.Common;
 
 namespace MedManage.Application.Services;
 
@@ -8,12 +7,7 @@ public class PasswordService : IPasswordService
 {
     private const string ReadableChars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789";
 
-    public string Hash(string password)
-    {
-        var sha256 = SHA256.HashData(Encoding.UTF8.GetBytes(password));
-        var sha256Hex = Convert.ToHexString(sha256).ToLowerInvariant();
-        return BCrypt.Net.BCrypt.HashPassword(sha256Hex, workFactor: 12);
-    }
+    public string Hash(string password) => PasswordHelper.Hash(password);
 
     public bool Verify(string password, string hash)
     {

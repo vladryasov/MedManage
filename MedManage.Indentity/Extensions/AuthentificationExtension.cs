@@ -36,10 +36,13 @@ namespace MedManage.Identity.Extensions
                 {
                     OnMessageReceived = context =>
                     {
-                        var token = context.Request.Cookies["access_token"];
-                        if (!string.IsNullOrEmpty(token))
+                        if (!context.Request.Path.StartsWithSegments("/api/Auth"))
                         {
-                            context.Token = token;
+                            var token = context.Request.Cookies["access_token"];
+                            if (!string.IsNullOrEmpty(token))
+                            {
+                                context.Token = token;
+                            }
                         }
 
                         return Task.CompletedTask;
