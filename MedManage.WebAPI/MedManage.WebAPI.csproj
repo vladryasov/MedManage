@@ -79,6 +79,7 @@
     <ItemGroup>
       <PackageReference Include="AutoMapper" Version="16.1.1" />
       <PackageReference Include="AutoMapper.Extensions.ExpressionMapping" Version="11.0.0" />
+      <PackageReference Include="DotNetEnv" Version="3.2.0" />
       <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.8" />
       <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.8" />
       <PackageReference Include="Microsoft.EntityFrameworkCore.Abstractions" Version="10.0.8" />
@@ -95,6 +96,7 @@
     <ItemGroup>
       <ProjectReference Include="..\MedManage.Core\MedManage.Application\MedManage.Application.csproj" />
       <ProjectReference Include="..\MedManage.Indentity\MedManage.Indentity.csproj" />
+      <ProjectReference Include="..\MedManage.Persistence\MedManage.Persistence.csproj" />
     </ItemGroup>
 
 </Project>

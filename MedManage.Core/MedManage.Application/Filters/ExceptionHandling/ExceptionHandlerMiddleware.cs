@@ -53,6 +53,9 @@ public class ExceptionHandlingMiddleware
     /// </summary>
     private static Task HandleExceptionAsync(HttpContext context, Exception ex, int statusCode, string message)
     {
+        if (context.Response.HasStarted)
+            return Task.CompletedTask;
+
         context.Response.ContentType = "application/json";
         context.Response.StatusCode = statusCode;
         var result = JsonSerializer.Serialize(new { error = message });

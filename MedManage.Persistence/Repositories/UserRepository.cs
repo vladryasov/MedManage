@@ -26,20 +26,18 @@ public class UserRepository : IUserRepository
         return await _context.Users.FindAsync(userId);
     }
 
-    [Cache("AllUsers", ExpirationSeconds = 600)] // 10 минут
     public async Task<IEnumerable<User>> GetAllUsersAsync()
     {
         return await _context.Users.ToListAsync();
     }
 
-    [Cache("AllUsers", ExpirationSeconds = 600)]
     public async Task<IEnumerable<User>> GetAllAsync()
     {
         return await _context.Users.ToListAsync();
     }
 
     [Transactional]
-    [CacheInvalidate("AllUsers", "UserById:{user.Id}")]
+    [CacheInvalidate("UserById:*", "UserByUserName:*")]
     public async Task UpdateAsync(User user)
     {
         _context.Users.Update(user);
@@ -52,20 +50,40 @@ public class UserRepository : IUserRepository
         return await _context.Users.FindAsync(userId);
     }
 
+    public async Task<User?> FindByEmailAsync(string email)
+    {
+        return await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
+    }
+
+    [Cache("UserByUserName:{userName}", ExpirationSeconds = 600)]
+    public async Task<User?> FindByUserNameAsync(string userName)
+    {
+        return await _context.Users.FirstOrDefaultAsync(u => u.UserName == userName);
+    }
+
     [Transactional]
-    [CacheInvalidate("AllUsers")] // Сбрасываем список, т.к. появился новый пользователь
     public async Task<User> AddAsync(
         string userName,
         string fullName,
+        string email,
         UserRole role,
         string phoneNumber,
+        string? passwordHash = null,
         Guid? organizationId = null)
     {
-        var user = new User(userName, fullName, role, phoneNumber, organizationId);
+        var user = new User(userName, fullName, email, role, phoneNumber, passwordHash, organizationId);
 
         await _context.Users.AddAsync(user);
         await _context.SaveChangesAsync();
 
         return user;
+    }
+
+    [Transactional]
+    [CacheInvalidate("UserById:*", "UserByUserName:*")]
+    public async Task DeleteAsync(User user)
+    {
+        _context.Users.Remove(user);
+        await _context.SaveChangesAsync();
     }
 }

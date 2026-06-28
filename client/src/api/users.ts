@@ -1,5 +1,5 @@
 import apiClient from './axios';
-import type { UserDTO, UserRole } from '../types';
+import type { UserDTO, UserRole, CreateUserRequest } from '../types';
 
 export async function getCurrentUser(): Promise<UserDTO> {
   const { data } = await apiClient.get('/User/CurrentUser');
@@ -33,4 +33,13 @@ export async function updateUserPhone(
   user: UserDTO,
 ): Promise<void> {
   await apiClient.patch(`/User/users/${user.userId}/updateNumber`, user);
+}
+
+export async function deleteUser(userId: string): Promise<void> {
+  await apiClient.delete(`/User/${userId}`);
+}
+
+export async function createUser(request: CreateUserRequest): Promise<UserDTO> {
+  const { data } = await apiClient.post('/User/create', request);
+  return data;
 }

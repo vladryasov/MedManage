@@ -14,15 +14,19 @@ public class User
     public User(
         string userName,
         string fullName,
+        string email,
         UserRole role,
         string phoneNumber,
+        string? passwordHash = null,
         Guid? organizationId = null)
     {
         UserId = Guid.NewGuid();
         UserName = userName;
         FullName = fullName;
+        Email = email;
         Role = role;
         PhoneNumber = phoneNumber;
+        PasswordHash = passwordHash;
         OrganizationId = organizationId;
         CreatedAt = DateTime.UtcNow;
     }
@@ -31,16 +35,20 @@ public class User
     Guid userId,
     string userName,
     string fullName,
+    string email,
     UserRole role,
     string phoneNumber,
+    string? passwordHash,
     DateTime createdAt,
     Guid? organizationId = null)
     {
         UserId = userId;
         UserName = userName;
         FullName = fullName;
+        Email = email;
         Role = role;
         PhoneNumber = phoneNumber;
+        PasswordHash = passwordHash;
         CreatedAt = createdAt;
         OrganizationId = organizationId;
     }
@@ -61,9 +69,19 @@ public class User
     public string FullName { get; set; } = null!;
 
     /// <summary>
+    /// Email пользователя.
+    /// </summary>
+    public string Email { get; private set; } = null!;
+
+    /// <summary>
     /// Роль пользователя в системе.
     /// </summary>
     public UserRole Role { get; set; }
+
+    /// <summary>
+    /// Хеш пароля пользователя.
+    /// </summary>
+    public string? PasswordHash { get; set; }
 
     /// <summary>
     /// Дата и время создания записи о пользователе.
@@ -89,4 +107,6 @@ public class User
     /// Объявления, созданные пользователем.
     /// </summary>
     public ICollection<Announcement> Announcements { get; private set; } = new List<Announcement>();
+    public ICollection<PurchaseRequest> PurchaseRequestsAsBuyer { get; private set; } = new List<PurchaseRequest>();
+    public ICollection<PurchaseRequest> PurchaseRequestsAsSeller { get; private set; } = new List<PurchaseRequest>();
 }

@@ -75,6 +75,51 @@ namespace MedManage.Persistence.Migrations
                     b.ToTable("Announcements", (string)null);
                 });
 
+            modelBuilder.Entity("MedManage.Domain.Entities.InAppNotification", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsRead")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Message")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<Guid>("RecipientUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("RelatedEntityId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("SenderUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("IsRead");
+
+                    b.HasIndex("RecipientUserId");
+
+                    b.HasIndex("SenderUserId");
+
+                    b.ToTable("InAppNotifications", (string)null);
+                });
+
             modelBuilder.Entity("MedManage.Domain.Entities.Inventory", b =>
                 {
                     b.Property<Guid>("InventoryId")
@@ -96,6 +141,60 @@ namespace MedManage.Persistence.Migrations
                         .IsUnique();
 
                     b.ToTable("Inventories", (string)null);
+                });
+
+            modelBuilder.Entity("MedManage.Domain.Entities.NotificationOutbox", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Body")
+                        .IsRequired()
+                        .HasMaxLength(4000)
+                        .HasColumnType("character varying(4000)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ErrorMessage")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<string>("RecipientEmail")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<Guid?>("RecipientUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("RetryCount")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("SentAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Subject")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedAt");
+
+                    b.HasIndex("RecipientUserId");
+
+                    b.HasIndex("Status");
+
+                    b.ToTable("NotificationOutbox", (string)null);
                 });
 
             modelBuilder.Entity("MedManage.Domain.Entities.Organization", b =>
@@ -172,6 +271,77 @@ namespace MedManage.Persistence.Migrations
                     b.ToTable("Products", (string)null);
                 });
 
+            modelBuilder.Entity("MedManage.Domain.Entities.PurchaseRequest", b =>
+                {
+                    b.Property<Guid>("PurchaseRequestId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("AnnouncementId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("BuyerUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Message")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<Guid>("SellerUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("PurchaseRequestId");
+
+                    b.HasIndex("AnnouncementId");
+
+                    b.HasIndex("BuyerUserId");
+
+                    b.HasIndex("SellerUserId");
+
+                    b.ToTable("PurchaseRequests", (string)null);
+                });
+
+            modelBuilder.Entity("MedManage.Domain.Entities.RefreshToken", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("RevokedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("TokenHash")
+                        .IsRequired()
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TokenHash");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("RefreshTokens", (string)null);
+                });
+
             modelBuilder.Entity("MedManage.Domain.Entities.User", b =>
                 {
                     b.Property<Guid>("UserId")
@@ -181,6 +351,11 @@ namespace MedManage.Persistence.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
                     b.Property<string>("FullName")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -188,6 +363,10 @@ namespace MedManage.Persistence.Migrations
 
                     b.Property<Guid?>("OrganizationId")
                         .HasColumnType("uuid");
+
+                    b.Property<string>("PasswordHash")
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)");
 
                     b.Property<string>("PhoneNumber")
                         .IsRequired()
@@ -204,6 +383,9 @@ namespace MedManage.Persistence.Migrations
 
                     b.HasKey("UserId");
 
+                    b.HasIndex("Email")
+                        .IsUnique();
+
                     b.HasIndex("OrganizationId");
 
                     b.HasIndex("UserName")
@@ -217,7 +399,7 @@ namespace MedManage.Persistence.Migrations
                     b.HasOne("MedManage.Domain.Entities.User", "User")
                         .WithMany("Announcements")
                         .HasForeignKey("CreatedByUserId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("MedManage.Domain.Entities.Organization", "Organization")
@@ -228,6 +410,24 @@ namespace MedManage.Persistence.Migrations
                     b.Navigation("Organization");
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("MedManage.Domain.Entities.InAppNotification", b =>
+                {
+                    b.HasOne("MedManage.Domain.Entities.User", "RecipientUser")
+                        .WithMany()
+                        .HasForeignKey("RecipientUserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("MedManage.Domain.Entities.User", "SenderUser")
+                        .WithMany()
+                        .HasForeignKey("SenderUserId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.Navigation("RecipientUser");
+
+                    b.Navigation("SenderUser");
                 });
 
             modelBuilder.Entity("MedManage.Domain.Entities.Inventory", b =>
@@ -241,6 +441,16 @@ namespace MedManage.Persistence.Migrations
                     b.Navigation("Product");
                 });
 
+            modelBuilder.Entity("MedManage.Domain.Entities.NotificationOutbox", b =>
+                {
+                    b.HasOne("MedManage.Domain.Entities.User", "RecipientUser")
+                        .WithMany()
+                        .HasForeignKey("RecipientUserId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.Navigation("RecipientUser");
+                });
+
             modelBuilder.Entity("MedManage.Domain.Entities.Product", b =>
                 {
                     b.HasOne("MedManage.Domain.Entities.Organization", "Organization")
@@ -252,6 +462,43 @@ namespace MedManage.Persistence.Migrations
                     b.Navigation("Organization");
                 });
 
+            modelBuilder.Entity("MedManage.Domain.Entities.PurchaseRequest", b =>
+                {
+                    b.HasOne("MedManage.Domain.Entities.Announcement", "Announcement")
+                        .WithMany("PurchaseRequests")
+                        .HasForeignKey("AnnouncementId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.HasOne("MedManage.Domain.Entities.User", "BuyerUser")
+                        .WithMany("PurchaseRequestsAsBuyer")
+                        .HasForeignKey("BuyerUserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("MedManage.Domain.Entities.User", "SellerUser")
+                        .WithMany("PurchaseRequestsAsSeller")
+                        .HasForeignKey("SellerUserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Announcement");
+
+                    b.Navigation("BuyerUser");
+
+                    b.Navigation("SellerUser");
+                });
+
+            modelBuilder.Entity("MedManage.Domain.Entities.RefreshToken", b =>
+                {
+                    b.HasOne("MedManage.Domain.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("MedManage.Domain.Entities.User", b =>
                 {
                     b.HasOne("MedManage.Domain.Entities.Organization", "Organization")
@@ -260,6 +507,11 @@ namespace MedManage.Persistence.Migrations
                         .OnDelete(DeleteBehavior.SetNull);
 
                     b.Navigation("Organization");
+                });
+
+            modelBuilder.Entity("MedManage.Domain.Entities.Announcement", b =>
+                {
+                    b.Navigation("PurchaseRequests");
                 });
 
             modelBuilder.Entity("MedManage.Domain.Entities.Organization", b =>
@@ -279,6 +531,10 @@ namespace MedManage.Persistence.Migrations
             modelBuilder.Entity("MedManage.Domain.Entities.User", b =>
                 {
                     b.Navigation("Announcements");
+
+                    b.Navigation("PurchaseRequestsAsBuyer");
+
+                    b.Navigation("PurchaseRequestsAsSeller");
                 });
 #pragma warning restore 612, 618
         }

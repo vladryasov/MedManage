@@ -1,10 +1,9 @@
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { isTokenExpired } from '../utils/jwt';
 import { Spin } from 'antd';
 
 export default function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { token, loading } = useAuth();
+  const { user, loading } = useAuth();
 
   if (loading) {
     return (
@@ -14,7 +13,7 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
     );
   }
 
-  if (!token || isTokenExpired(token)) {
+  if (!user) {
     return <Navigate to="/login" replace />;
   }
 

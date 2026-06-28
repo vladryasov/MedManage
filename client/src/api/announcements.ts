@@ -1,5 +1,5 @@
 import apiClient from './axios';
-import type { AnnouncementDTO, PaginatedQueryParams } from '../types';
+import type { AnnouncementDTO, PaginatedQueryParams, PaginatedResult } from '../types';
 
 export async function getAllAnnouncements(): Promise<AnnouncementDTO[]> {
   const { data } = await apiClient.get('/Announcement/all');
@@ -13,7 +13,7 @@ export async function getAnnouncementById(id: string): Promise<AnnouncementDTO> 
 
 export async function getPaginatedAnnouncements(
   params: PaginatedQueryParams,
-): Promise<AnnouncementDTO[]> {
+): Promise<PaginatedResult<AnnouncementDTO>> {
   const { data } = await apiClient.get('/Announcement/paginated', { params });
   return data;
 }
@@ -29,11 +29,14 @@ export async function updateAnnouncementContent(
   id: string,
   content: string,
 ): Promise<void> {
-  await apiClient.patch(`/Announcement/${id}`, JSON.stringify(content), {
-    headers: { 'Content-Type': 'application/json' },
-  });
+  await apiClient.patch(`/Announcement/${id}`, { content });
 }
 
 export async function deleteAnnouncement(id: string): Promise<void> {
   await apiClient.delete(`/Announcement/${id}`);
+}
+
+export async function getMyAnnouncements(): Promise<AnnouncementDTO[]> {
+  const { data } = await apiClient.get('/Announcement/my');
+  return data;
 }

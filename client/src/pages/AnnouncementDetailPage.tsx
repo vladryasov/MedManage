@@ -11,9 +11,11 @@ import {
   message,
   Spin,
   Space,
+  Modal,
 } from 'antd';
-import { ArrowLeftOutlined, EditOutlined } from '@ant-design/icons';
+import { ArrowLeftOutlined, EditOutlined, ShoppingCartOutlined } from '@ant-design/icons';
 import { useAnnouncement } from '../hooks/useAnnouncements';
+import { useCreatePurchaseRequest } from '../hooks/usePurchaseRequests';
 import { updateAnnouncementContent } from '../api/announcements';
 import {
   inventoryStatusLabels,
@@ -21,6 +23,7 @@ import {
   InventoryStatus,
   ProductType,
 } from '../types';
+import { useAuth } from '../contexts/AuthContext';
 import dayjs from 'dayjs';
 
 const { Title, Paragraph } = Typography;
@@ -39,9 +42,13 @@ export default function AnnouncementDetailPage() {
   const queryClient = useQueryClient();
   const { data: announcement, isLoading } = useAnnouncement(id!);
   const location = useLocation();
+  const { user } = useAuth();
+  const createRequestMutation = useCreatePurchaseRequest();
 
   const [editing, setEditing] = useState(location.state?.startEditing === true);
   const [newContent, setNewContent] = useState('');
+  const [requestModalOpen, setRequestModalOpen] = useState(false);
+  const [requestMessage, setRequestMessage] = useState('');
 
   useEffect(() => {
     if (editing && announcement) {
@@ -59,6 +66,24 @@ export default function AnnouncementDetailPage() {
       message.error('Ошибка при обновлении');
     }
   };
+
+  const handleRequestPurchase = async () => {
+    if (!id) return;
+    try {
+      await createRequestMutation.mutateAsync({
+        announcementId: id,
+        message: requestMessage || undefined,
+      });
+      message.success('Запрос на покупку отправлен');
+      setRequestModalOpen(false);
+      setRequestMessage('');
+    } catch {
+      message.error('Ошибка при отправке запроса');
+    }
+  };
+
+  const isOwnAnnouncement = user && announcement && user.userId === announcement.createdByUserId;
+  const canRequest = announcement?.statusInventory === InventoryStatus.InStock && !isOwnAnnouncement;
 
   if (isLoading) {
     return (
@@ -82,8 +107,20 @@ export default function AnnouncementDetailPage() {
       >
         Назад
       </Button>
-      <Title level={4}>{announcement.title}</Title>
-      <Descriptions column={1} bordered size="small" style={{ marginBottom: 24 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Title level={4} style={{ margin: 0 }}>{announcement.title}</Title>
+        {canRequest && (
+          <Button
+            type="primary"
+            icon={<ShoppingCartOutlined />}
+            onClick={() => setRequestModalOpen(true)}
+            loading={createRequestMutation.isPending}
+          >
+            Запросить покупку
+          </Button>
+        )}
+      </div>
+      <Descriptions column={1} bordered size="small" style={{ marginTop: 16, marginBottom: 24 }}>
         <Descriptions.Item label="Автор">{announcement.userName}</Descriptions.Item>
         <Descriptions.Item label="Тип">
           {productTypeLabels[announcement.typeProduct as ProductType] ??
@@ -149,6 +186,27 @@ export default function AnnouncementDetailPage() {
       ) : (
         <Paragraph>{announcement.content}</Paragraph>
       )}
+
+      <Modal
+        title="Запрос на покупку"
+        open={requestModalOpen}
+        onOk={handleRequestPurchase}
+        onCancel={() => {
+          setRequestModalOpen(false);
+          setRequestMessage('');
+        }}
+        confirmLoading={createRequestMutation.isPending}
+        okText="Отправить"
+        cancelText="Отмена"
+      >
+        <p>Вы хотите купить: <strong>{announcement.title}</strong></p>
+        <Input.TextArea
+          rows={3}
+          value={requestMessage}
+          onChange={(e) => setRequestMessage(e.target.value)}
+          placeholder="Сообщение продавцу (необязательно)"
+        />
+      </Modal>
     </Card>
   );
 }

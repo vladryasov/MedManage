@@ -11,7 +11,9 @@ import AnnouncementsPage from './pages/AnnouncementsPage';
 import AnnouncementDetailPage from './pages/AnnouncementDetailPage';
 import CreateAnnouncementPage from './pages/CreateAnnouncementPage';
 import UsersPage from './pages/UsersPage';
+import OrganizationsPage from './pages/OrganizationsPage';
 import ProfilePage from './pages/ProfilePage';
+import NotificationsPage from './pages/NotificationsPage';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -39,7 +41,9 @@ function AppRoutes() {
         <Route path="announcements/:id" element={<AnnouncementDetailPage />} />
         <Route path="announcements/create" element={<CreateAnnouncementPage />} />
         <Route path="users" element={<UsersPage />} />
+        <Route path="organizations" element={<OrganizationsPage />} />
         <Route path="profile" element={<ProfilePage />} />
+        <Route path="notifications" element={<NotificationsPage />} />
       </Route>
     </Routes>
   );

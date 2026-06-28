@@ -5,20 +5,20 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace MedManage.Application.Extensions;
 
-/// <summary>
-/// Класс расширений для регистрации сервисов приложения.
-/// </summary>
 public static class ServiceCollectionExtensions
 {
-    /// <summary>
-    /// Метод для регистрации всех основных сервисов и профилей AutoMapper.
-    /// </summary>
-    /// <param name="services">Коллекция сервисов для добавления зависимостей.</param>
     public static void AddCoreApplicationServices(this IServiceCollection services)
     {
         services.AddScoped<IAnnouncementService, AnnouncementService>();
         services.AddScoped<IUserService, UserService>();
         services.AddScoped<IAuthService, AuthService>();
+        services.AddScoped<IPasswordService, PasswordService>();
+        services.AddScoped<ITokenService, TokenService>();
+        services.AddHttpClient<IEmailSender, MailKitEmailSender>();
+        services.AddScoped<IOutboxService, OutboxService>();
+        services.AddScoped<IOrganizationService, OrganizationService>();
+        services.AddScoped<IPurchaseRequestService, PurchaseRequestService>();
+        services.AddScoped<IInAppNotificationService, InAppNotificationService>();
 
         services.AddAutoMapper(cfg =>
         {
@@ -27,11 +27,8 @@ public static class ServiceCollectionExtensions
             cfg.AddProfile<InventoryMappingProfile>();
             cfg.AddProfile<OrganizationMappingProfile>();
             cfg.AddProfile<AnnouncementMappingProfile>();
+            cfg.AddProfile<PurchaseRequestMappingProfile>();
+            cfg.AddProfile<InAppNotificationMappingProfile>();
         });
-        /*services.AddAutoMapper(typeof(UserMappingProfile).Assembly);
-        services.AddAutoMapper(typeof(ProductMappingProfile));
-        services.AddAutoMapper(typeof(InventoryMappingProfile));
-        services.AddAutoMapper(typeof(OrganizationMappingProfile));
-        services.AddAutoMapper(typeof(AnnouncementMappingProfile));*/
     }
 }

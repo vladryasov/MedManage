@@ -1,14 +1,13 @@
 import { createContext, useContext, useState, useEffect, useCallback, useRef, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import { getCurrentUser } from '../api/users';
-import { isTokenExpired } from '../utils/jwt';
 import type { UserDTO } from '../types';
 
 interface AuthContextType {
-  token: string | null;
   user: UserDTO | null;
   loading: boolean;
-  loginUser: (token: string, user: UserDTO) => void;
+  loginUser: (user: UserDTO) => void;
   logout: () => void;
   updateUser: (user: UserDTO) => void;
 }
@@ -17,14 +16,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
-  const [token, setTokenState] = useState<string | null>(() => {
-    const stored = localStorage.getItem('jwt_token');
-    if (stored && isTokenExpired(stored)) {
-      localStorage.removeItem('jwt_token');
-      return null;
-    }
-    return stored;
-  });
+  const queryClient = useQueryClient();
   const [user, setUser] = useState<UserDTO | null>(null);
   const [loading, setLoading] = useState(true);
   const fetchingRef = useRef(false);
@@ -36,8 +28,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const currentUser = await getCurrentUser();
       setUser(currentUser);
     } catch {
-      localStorage.removeItem('jwt_token');
-      setTokenState(null);
       setUser(null);
     } finally {
       setLoading(false);
@@ -46,34 +36,39 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    if (token) {
-      fetchUser();
-    } else {
-      setLoading(false);
-    }
-  }, [token, fetchUser]);
+    fetchUser();
+  }, [fetchUser]);
 
   useEffect(() => {
     const handler = () => {
-      localStorage.removeItem('jwt_token');
-      setTokenState(null);
       setUser(null);
+      queryClient.clear();
       navigate('/login');
     };
     window.addEventListener('auth:unauthorized', handler);
     return () => window.removeEventListener('auth:unauthorized', handler);
-  }, [navigate]);
+  }, [navigate, queryClient]);
 
-  const loginUser = (newToken: string, newUser: UserDTO) => {
-    localStorage.setItem('jwt_token', newToken);
-    setTokenState(newToken);
+  const loginUser = (newUser: UserDTO) => {
     setUser(newUser);
     setLoading(false);
+    queryClient.invalidateQueries({ queryKey: ['announcements'] });
+    queryClient.invalidateQueries({ queryKey: ['users'] });
+    queryClient.invalidateQueries({ queryKey: ['notifications'] });
   };
 
-  const logout = () => {
-    localStorage.removeItem('jwt_token');
-    setTokenState(null);
+  const logout = async () => {
+    try {
+      await fetch('/api/Auth/logout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: '{}',
+      });
+    } catch {
+      // ignore
+    }
+    queryClient.clear();
     setUser(null);
     navigate('/login');
   };
@@ -83,7 +78,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ token, user, loading, loginUser, logout, updateUser }}>
+    <AuthContext.Provider value={{ user, loading, loginUser, logout, updateUser }}>
       {children}
     </AuthContext.Provider>
   );

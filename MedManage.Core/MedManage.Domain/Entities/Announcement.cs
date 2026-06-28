@@ -97,4 +97,9 @@ public class Announcement
     /// Организация, к которой относится объявление.
     /// </summary>
     public Organization? Organization { get; set; }
+
+    /// <summary>
+    /// Запросы на покупку, связанные с этим объявлением.
+    /// </summary>
+    public ICollection<PurchaseRequest> PurchaseRequests { get; private set; } = new List<PurchaseRequest>();
 }
