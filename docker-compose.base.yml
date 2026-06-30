@@ -15,9 +15,7 @@ services:
     restart: unless-stopped
 
   backend:
-    build:
-      context: .
-      dockerfile: MedManage.WebAPI/Dockerfile
+    image: ghcr.io/vladryasov/medmanage/backend:latest
     depends_on:
       postgres:
         condition: service_healthy

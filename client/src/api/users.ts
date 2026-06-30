@@ -24,7 +24,7 @@ export async function updateUserRole(
   user: UserDTO,
   newRole: UserRole,
 ): Promise<void> {
-  await apiClient.patch(`/User/users/${user.userId}/Role`, user, {
+  await apiClient.patch(`/User/${user.userId}/role`, undefined, {
     params: { newRole },
   });
 }
@@ -32,7 +32,7 @@ export async function updateUserRole(
 export async function updateUserPhone(
   user: UserDTO,
 ): Promise<void> {
-  await apiClient.patch(`/User/users/${user.userId}/updateNumber`, user);
+  await apiClient.patch(`/User/${user.userId}/phone`, JSON.stringify(user.phoneNumber));
 }
 
 export async function deleteUser(userId: string): Promise<void> {

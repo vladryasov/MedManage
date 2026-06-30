@@ -22,9 +22,11 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Set up Docker tags
+      - name: Docker tags
         id: meta
         run: |
+          REPO="${GITHUB_REPOSITORY,,}"
+          echo "repo=$REPO" >> $GITHUB_OUTPUT
           if [[ $GITHUB_REF == refs/tags/* ]]; then
             VERSION=${GITHUB_REF#refs/tags/}
             echo "tags=$VERSION,latest" >> $GITHUB_OUTPUT
@@ -38,11 +40,11 @@ jobs:
           context: .
           file: MedManage.WebAPI/Dockerfile
           push: true
-          tags: ghcr.io/${{ github.repository }}/backend:${{ steps.meta.outputs.tags }}
+          tags: ghcr.io/${{ steps.meta.outputs.repo }}/backend:${{ steps.meta.outputs.tags }}
 
       - name: Build and push frontend
         uses: docker/build-push-action@v6
         with:
           context: ./client
           push: true
-          tags: ghcr.io/${{ github.repository }}/frontend:${{ steps.meta.outputs.tags }}
+          tags: ghcr.io/${{ steps.meta.outputs.repo }}/frontend:${{ steps.meta.outputs.tags }}
