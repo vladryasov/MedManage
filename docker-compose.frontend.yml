@@ -1,7 +1,6 @@
 services:
   frontend:
-    build:
-      context: ./client
+    image: ghcr.io/vladryasov/medmanage/frontend:latest
     ports:
       - "5173:80"
     depends_on:
