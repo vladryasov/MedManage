@@ -213,10 +213,6 @@ export default function AnnouncementsPage() {
           }}
         />
       </div>
-
-      <div style={{ flexShrink: 0, textAlign: 'center', color: '#999', fontSize: 12, paddingTop: 8 }}>
-        &copy; 2026 MedManage
-      </div>
     </Card>
   );
 }
